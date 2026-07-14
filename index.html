@@ -1178,64 +1178,41 @@ function showToast(msg,type=''){
 
 // ══ FIREBASE ══════════════════════════════════════════════════════════════════
 const FB_SECRET = "pfSecret2024!";
-let db, docRef;
-
-function initFirebase(){
-  try{
-    db = firebase.firestore();
-    docRef = db.collection('portfolio').doc('fabiano');
-    console.log('Firebase OK');
-  }catch(e){ console.warn('Firebase non disponibile:', e); }
-}
-
-let syncTimeout = null;
+let db, docRef, syncTimeout=null;
 
 async function loadFromFirebase(){
   if(!docRef) return false;
   try{
-    const doc = await docRef.get();
+    const doc=await docRef.get();
     if(doc.exists){
-      const data = doc.data();
-      // Se i dati Firebase hanno versione vecchia, ignora e usa i default freschi
-      if(data.dataVer && data.dataVer !== DATA_VER) return false;
-      if(data.personale) ST.personale = data.personale;
-      if(data.figli) ST.figli = data.figli;
-      localStorage.setItem('pfData', JSON.stringify(ST));
+      const data=doc.data();
+      if(data.dataVer&&data.dataVer!==DATA_VER) return false;
+      if(data.personale) ST.personale=data.personale;
+      if(data.figli) ST.figli=data.figli;
+      localStorage.setItem('pfData',JSON.stringify(ST));
       return true;
     }
-  }catch(e){ console.warn('Firebase load error:', e); }
+  }catch(e){console.warn('Firebase load error:',e);}
   return false;
 }
 
 function saveToFirebase(){
   if(!docRef) return;
   if(syncTimeout) clearTimeout(syncTimeout);
-  syncTimeout = setTimeout(async ()=>{
+  syncTimeout=setTimeout(async()=>{
     try{
       await docRef.set({
-        secret: FB_SECRET,
-        dataVer: DATA_VER,
-        personale: ST.personale,
-        figli: ST.figli,
-        updatedAt: new Date().toISOString(),
+        secret:FB_SECRET,
+        dataVer:DATA_VER,
+        personale:ST.personale,
+        figli:ST.figli,
+        updatedAt:new Date().toISOString(),
       });
-    }catch(e){ console.warn('Firebase save error:', e); }
-  }, 2000);
+    }catch(e){console.warn('Firebase save error:',e);}
+  },2000);
 }
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
-function initApp(){
-  document.getElementById('p-imp').addEventListener('change', e=>importData(e,'personale'));
-  document.getElementById('f-imp').addEventListener('change', e=>importData(e,'figli'));
-  document.getElementById('p-csv-imp').addEventListener('change', e=>importCSV(e,'personale'));
-  document.getElementById('f-csv-imp').addEventListener('change', e=>importCSV(e,'figli'));
-  setTimeout(()=>switchTab('personale'),50);
-  renderAll();
-  refreshBTC();
-}
-checkAuth();
-checkAuth();
-
 function onFirebaseLoaded(){
   const check=setInterval(()=>{
     if(typeof firebase!=='undefined'&&typeof firebase.firestore==='function'){
@@ -1261,6 +1238,18 @@ function onFirebaseLoaded(){
     }
   },100);
 }
+
+function initApp(){
+  document.getElementById('p-imp').addEventListener('change',e=>importData(e,'personale'));
+  document.getElementById('f-imp').addEventListener('change',e=>importData(e,'figli'));
+  document.getElementById('p-csv-imp').addEventListener('change',e=>importCSV(e,'personale'));
+  document.getElementById('f-csv-imp').addEventListener('change',e=>importCSV(e,'figli'));
+  setTimeout(()=>switchTab('personale'),50);
+  renderAll();
+  refreshBTC();
+}
+
+checkAuth();
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onload="onFirebaseLoaded()"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
