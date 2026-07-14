@@ -1225,7 +1225,6 @@ function saveToFirebase(){
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
 function initApp(){
-  initFirebase();
   document.getElementById('p-imp').addEventListener('change', e=>importData(e,'personale'));
   document.getElementById('f-imp').addEventListener('change', e=>importData(e,'figli'));
   document.getElementById('p-csv-imp').addEventListener('change', e=>importCSV(e,'personale'));
@@ -1235,33 +1234,35 @@ function initApp(){
   refreshBTC();
 }
 checkAuth();
-</script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onload="onFirebaseLoaded()"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script>
+checkAuth();
+
 function onFirebaseLoaded(){
-  // Aspetta che anche firestore sia caricato
   const check=setInterval(()=>{
-    if(typeof firebase !== 'undefined' && firebase.firestore){
+    if(typeof firebase!=='undefined'&&typeof firebase.firestore==='function'){
       clearInterval(check);
-      firebase.initializeApp({
-        apiKey: "AIzaSyAjazqGgUySYor31d0veKZ98vAGkCD-EH0",
-        authDomain: "portfolio-dashboard-78ed8.firebaseapp.com",
-        projectId: "portfolio-dashboard-78ed8",
-        storageBucket: "portfolio-dashboard-78ed8.firebasestorage.app",
-        messagingSenderId: "532868919044",
-        appId: "1:532868919044:web:bfcf5b27bd39131afcaa51"
-      });
-      initFirebase();
-      // Se l'app è già autenticata, carica dati da Firebase
-      if(sessionStorage.getItem('pfAuth')==='1'){
-        loadFromFirebase().then(loaded=>{
-          if(loaded){ renderAll(); showToast('Dati sincronizzati ✓','success'); }
+      try{
+        firebase.initializeApp({
+          apiKey:"AIzaSyAjazqGgUySYor31d0veKZ98vAGkCD-EH0",
+          authDomain:"portfolio-dashboard-78ed8.firebaseapp.com",
+          projectId:"portfolio-dashboard-78ed8",
+          storageBucket:"portfolio-dashboard-78ed8.firebasestorage.app",
+          messagingSenderId:"532868919044",
+          appId:"1:532868919044:web:bfcf5b27bd39131afcaa51"
         });
-      }
+        db=firebase.firestore();
+        docRef=db.collection('portfolio').doc('fabiano');
+        console.log('Firebase OK');
+        if(sessionStorage.getItem('pfAuth')==='1'){
+          loadFromFirebase().then(loaded=>{
+            if(loaded){renderAll();showToast('Dati sincronizzati ✓','success');}
+          });
+        }
+      }catch(e){console.warn('Firebase init error:',e);}
     }
   },100);
 }
 </script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onload="onFirebaseLoaded()"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </body>
 </html>
