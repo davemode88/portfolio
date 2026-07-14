@@ -1198,9 +1198,25 @@ async function loadFromFirebase(){
     const doc=await docRef.get();
     if(doc.exists){
       const data=doc.data();
-      if(data.dataVer&&data.dataVer!==DATA_VER) return false;
-      if(data.personale) ST.personale=data.personale;
-      if(data.figli) ST.figli=data.figli;
+      if(data.dataVer&&data.dataVer===DATA_VER){
+        if(data.personale) ST.personale=data.personale;
+        if(data.figli) ST.figli=data.figli;
+      } else {
+        // Versione diversa — migra i dati mantenendo transazioni e prezzi
+        if(data.personale){
+          ST.personale=data.personale;
+          // Correggi ticker errati
+          const tickerFix = {'p-sgld':'SGLD-EUR','p-cmod':'CMOD'};
+          ST.personale.etfs.forEach(e=>{ if(tickerFix[e.id]) e.ticker=tickerFix[e.id]; });
+        }
+        if(data.figli){
+          ST.figli=data.figli;
+          const tickerFix = {'f-sgld':'SGLD','f-cmod':'CMOD-USD'};
+          ST.figli.etfs.forEach(e=>{ if(tickerFix[e.id]) e.ticker=tickerFix[e.id]; });
+        }
+        // Salva con versione aggiornata
+        saveToFirebase();
+      }
       localStorage.setItem('pfData',JSON.stringify(ST));
       return true;
     }
