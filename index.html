@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Portfolio</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyAjazqGgUySYor31d0veKZ98vAGkCD-EH0",
+  authDomain: "portfolio-dashboard-78ed8.firebaseapp.com",
+  projectId: "portfolio-dashboard-78ed8",
+  storageBucket: "portfolio-dashboard-78ed8.firebasestorage.app",
+  messagingSenderId: "532868919044",
+  appId: "1:532868919044:web:bfcf5b27bd39131afcaa51"
+});
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--border:#1e293b;
+  --green:#10b981;--red:#ef4444;--blue:#3b82f6;--gold:#f59e0b;
+  --purple:#8b5cf6;--text:#f1f5f9;--muted:#94a3b8;--tab-h:64px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;min-height:100dvh;-webkit-font-smoothing:antialiased}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px}
+.login-screen.hidden{display:none}
+.login-logo{font-size:48px;margin-bottom:24px}
+.login-title{font-size:22px;font-weight:700;margin-bottom:6px;text-align:center}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:32px;text-align:center}
+.login-input{width:100%;max-width:320px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px 16px;font-size:16px;text-align:center;outline:none}
+.login-input:focus{border-color:var(--blue)}
+.login-btn{width:100%;max-width:320px;margin-top:12px;background:var(--blue);color:white;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:600;cursor:pointer}
+.login-btn:active{opacity:.85}
+.login-err{color:var(--red);font-size:13px;margin-top:10px;min-height:20px;text-align:center}
+
+/* TOP BAR */
+.top-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px 12px;position:sticky;top:0;z-index:100}
+.top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.port-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px}
+.port-total{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.top-gains{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.port-gain{font-size:12px;font-weight:600;padding:3px 9px;border-radius:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.port-gain.pos{background:rgba(16,185,129,.15);color:var(--green)}
+.port-gain.neg{background:rgba(239,68,68,.15);color:var(--red)}
+.port-gain.neu{background:rgba(148,163,184,.1);color:var(--muted)}
+.live-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+.dot.loading{background:var(--gold);animation:pulse .5s ease-in-out infinite}
+.dot.error{background:var(--red);animation:none}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.live-lbl{font-size:11px;color:var(--muted)}
+.refresh-btn{margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.refresh-btn:active{background:var(--border)}
+.spin{animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TABS */
+.tab-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;height:var(--tab-h);z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.tab-btn{flex:1;background:none;border:none;color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:color .15s}
+.tab-btn.active{color:var(--blue)}
+.tab-icon{font-size:20px}
+.tab-ind{position:absolute;top:0;height:2px;background:var(--blue);transition:left .2s ease,width .2s ease;border-radius:0 0 2px 2px}
+
+/* LAYOUT */
+.app{padding-bottom:calc(var(--tab-h) + 16px)}
+.view{display:none;padding:12px 16px}
+.view.active{display:block}
+.sec-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.sec-title:first-child{margin-top:6px}
+
+/* SUMMARY */
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sum-item{background:var(--surface2);border-radius:10px;padding:12px}
+.sum-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+.sum-val{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ASSET CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);gap:8px}
+.card-title{font-size:13px;font-weight:600}
+.card-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+.badge-etf{background:rgba(59,130,246,.15);color:var(--blue)}
+.badge-crypto{background:rgba(139,92,246,.15);color:var(--purple)}
+.badge-gold{background:rgba(245,158,11,.15);color:var(--gold)}
+
+/* ETF BLOCK */
+.etf-block{padding:12px 16px;border-bottom:1px solid var(--border)}
+.etf-block:last-child{border-bottom:none}
+.etf-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.etf-left{min-width:0;flex:1}
+.etf-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.etf-detail{font-size:11px;color:var(--muted);margin-top:2px}
+.etf-right{text-align:right;flex-shrink:0}
+.etf-val{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.etf-gain{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:1px}
+.etf-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:10px}
+.meta-item{display:flex;flex-direction:column;gap:1px}
+.meta-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.meta-val{font-size:12px;font-weight:500;font-variant-numeric:tabular-nums}
+.alloc-wrap{margin-top:10px}
+.alloc-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px}
+.alloc-bg{background:var(--border);border-radius:3px;height:5px;overflow:hidden;position:relative}
+.alloc-fill{height:5px;border-radius:3px;transition:width .4s ease}
+.alloc-target{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.5);border-radius:1px}
+.etf-actions{display:flex;gap:6px;margin-top:10px}
+.btn-sm{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;text-align:center}
+.btn-sm:active{background:var(--border)}
+.btn-sm.primary{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3);color:var(--blue)}
+
+/* PRICE EDIT INLINE */
+.price-edit{display:none;background:var(--surface2);border-top:1px solid var(--border);padding:12px 16px}
+.price-edit.open{display:block}
+.price-edit-row{display:flex;gap:8px;align-items:center}
+.price-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:14px;font-variant-numeric:tabular-nums;outline:none}
+.price-input:focus{border-color:var(--blue)}
+.confirm-btn{background:var(--blue);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.confirm-btn:active{opacity:.85}
+
+/* TRANSACTION PANEL */
+.tx-panel{display:none;background:var(--surface2);border-top:1px solid var(--border);padding:14px 16px}
+.tx-panel.open{display:block}
+.tx-panel-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.tx-field{margin-bottom:10px}
+.tx-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.tx-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;font-variant-numeric:tabular-nums;outline:none}
+.tx-input:focus{border-color:var(--blue)}
+.tx-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.tx-btns{display:flex;gap:8px}
+.tx-add-btn{flex:1;background:var(--green);color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer}
+.tx-add-btn:active{opacity:.85}
+.tx-cancel-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer}
+
+/* TRANSACTION LIST */
+.tx-list{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}
+.tx-list-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.tx-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.tx-item:last-child{border-bottom:none}
+.tx-item-left{color:var(--muted)}
+.tx-item-right{text-align:right;font-variant-numeric:tabular-nums}
+.tx-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:2px 6px;opacity:.6}
+.tx-del:active{opacity:1}
+
+/* CARD TOTAL */
+.card-total{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface2)}
+.card-total-lbl{color:var(--muted);font-size:12px}
+.card-total-val{font-weight:700;font-variant-numeric:tabular-nums;font-size:15px;text-align:right}
+.card-total-sub{font-size:11px;font-variant-numeric:tabular-nums}
+
+/* BTC BLOCK */
+.btc-block{padding:12px 16px;border-bottom:1px solid var(--border)}
+.btc-block:last-child{border-bottom:none}
+.btc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.btc-name{font-size:13px;font-weight:600}
+.btc-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.btc-val{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.btc-gain{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:1px;text-align:right}
+
+/* REBALANCE */
+.rebal-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px}
+.rebal-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rebal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rebal-table{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
+.rebal-table th{padding:8px 10px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--surface2);white-space:nowrap}
+.rebal-table th:first-child{text-align:left}
+.rebal-table td{padding:10px 10px;text-align:right;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:middle}
+.rebal-table td:first-child{text-align:left;font-weight:500}
+.rebal-table tr:last-child td{border-bottom:none}
+.act-buy{color:var(--green);font-weight:700}
+.act-sell{color:var(--red);font-weight:700}
+.act-ok{color:var(--muted)}
+.drift-warn{color:var(--gold);font-weight:600}
+
+/* UTILS */
+.pos{color:var(--green)}.neg{color:var(--red)}.neu{color:var(--muted)}
+.toast{position:fixed;bottom:calc(var(--tab-h)+12px);left:16px;right:16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:13px;font-weight:500;transform:translateY(20px);opacity:0;transition:all .25s ease;z-index:300;text-align:center}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:var(--green);color:var(--green)}
+.toast.error{border-color:var(--red);color:var(--red)}
+
+/* BACKUP */
+.data-actions{display:flex;gap:8px;margin-bottom:10px}
+.data-btn{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;text-align:center}
+.data-btn:active{background:var(--border)}
+.file-input{display:none}
+
+@media(min-width:600px){
+  body{max-width:480px;margin:0 auto}
+  .tab-nav{max-width:480px;left:50%;transform:translateX(-50%)}
+  .toast{max-width:448px;left:50%;right:auto;width:100%;transform:translateX(-50%) translateY(20px)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo">📊</div>
+  <div class="login-title">Portfolio Dashboard</div>
+  <div class="login-sub">Inserisci la password per accedere</div>
+  <input class="login-input" type="password" id="loginPwd" placeholder="Password"
+    onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password">
+  <button class="login-btn" onclick="doLogin()">Accedi</button>
+  <div class="login-err" id="loginErr"></div>
+</div>
+
+<div class="top-bar">
+  <div class="top-row">
+    <div>
+      <div class="port-label" id="viewLabel">Portafoglio Personale</div>
+      <div class="port-total" id="totalValue">—</div>
+    </div>
+    <div class="top-gains">
+      <div class="port-gain neu" id="totalGainEur">—</div>
+      <div class="port-gain neu" id="totalGainPct">—</div>
+    </div>
+  </div>
+  <div class="live-row">
+    <div class="dot loading" id="liveDot"></div>
+    <span class="live-lbl" id="liveLbl">Aggiornamento BTC…</span>
+    <button class="refresh-btn" onclick="refreshBTC()"><span id="refreshIcon">↻</span> BTC</button>
+  </div>
+</div>
+
+<div class="app">
+
+<!-- ══ PERSONALE ══ -->
+<div class="view active" id="view-personale">
+
+  <div class="sec-title">Riepilogo</div>
+  <div class="sum-grid">
+    <div class="sum-item"><div class="sum-lbl">Valore ETF</div><div class="sum-val" id="p-etf-tot">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Valore BTC</div><div class="sum-val" id="p-btc-tot">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Totale Investito</div><div class="sum-val" id="p-carico">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Gain / Loss</div><div class="sum-val" id="p-gain">—</div></div>
+  </div>
+
+  <div class="sec-title">ETF — Trade Republic</div>
+  <div class="card" id="p-etf-card"><!-- dynamic --></div>
+
+  <div class="sec-title">Bitcoin</div>
+  <div class="card">
+    <div class="card-hdr">
+      <div><div class="card-title">Bitcoin</div><div class="card-sub" id="btc-price-lbl">Prezzo live: —</div></div>
+      <span class="badge badge-crypto">BTC</span>
+    </div>
+    <div id="p-btc-blocks"><!-- dynamic --></div>
+    <div class="card-total">
+      <span class="card-total-lbl">Totale BTC</span>
+      <div class="card-total-val" id="p-btc-sum">—<div class="card-total-sub" id="p-btc-gain-sum"></div></div>
+    </div>
+  </div>
+
+  <div class="sec-title">Ribilanciamento ETF</div>
+  <div class="rebal-card">
+    <div class="rebal-hdr">
+      <div><div class="card-title">Piano Ribilanciamento</div><div class="card-sub">PAC €200 · post-contributo</div></div>
+      <div class="badge" id="p-rebal-badge">—</div>
+    </div>
+    <div class="rebal-scroll"><table class="rebal-table">
+      <thead><tr><th>ETF</th><th>Target</th><th>Attuale</th><th>Drift</th><th>Importo</th><th>Quote</th><th>Azione</th></tr></thead>
+      <tbody id="p-rebal-body"></tbody>
+    </table></div>
+  </div>
+
+  <div class="sec-title">Backup</div>
+  <div class="data-actions">
+    <button class="data-btn" onclick="exportData('personale')">⬇ Esporta JSON</button>
+    <button class="data-btn" onclick="document.getElementById('p-imp').click()">⬆ Importa JSON</button>
+    <input type="file" accept=".json" class="file-input" id="p-imp">
+  </div>
+  <div class="data-actions">
+    <button class="data-btn" style="background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:var(--green)" onclick="document.getElementById('p-csv-imp').click()">📥 Importa CSV Trade Republic</button>
+  </div>
+</div>
+
+<!-- ══ FIGLI ══ -->
+<div class="view" id="view-figli">
+
+  <div class="sec-title">Riepilogo</div>
+  <div class="sum-grid">
+    <div class="sum-item"><div class="sum-lbl">Valore ETF</div><div class="sum-val" id="f-etf-tot">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Oro Fisico</div><div class="sum-val" id="f-gold-tot">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Totale Investito</div><div class="sum-val" id="f-carico">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Gain / Loss</div><div class="sum-val" id="f-gain">—</div></div>
+  </div>
+
+  <div class="sec-title">ETF — Trade Republic</div>
+  <div class="card" id="f-etf-card"><!-- dynamic --></div>
+
+  <div class="sec-title">Oro Fisico</div>
+  <div class="card">
+    <div class="card-hdr">
+      <div><div class="card-title">Oro Fisico</div><div class="card-sub" id="gold-price-lbl">Prezzo: —</div></div>
+      <span class="badge badge-gold">XAU</span>
+    </div>
+    <div id="f-gold-block"><!-- dynamic --></div>
+  </div>
+
+  <div class="sec-title">Ribilanciamento ETF</div>
+  <div class="rebal-card">
+    <div class="rebal-hdr">
+      <div><div class="card-title">Piano Ribilanciamento</div><div class="card-sub">PAC €250 · post-contributo</div></div>
+      <div class="badge" id="f-rebal-badge">—</div>
+    </div>
+    <div class="rebal-scroll"><table class="rebal-table">
+      <thead><tr><th>ETF</th><th>Target</th><th>Attuale</th><th>Drift</th><th>Importo</th><th>Quote</th><th>Azione</th></tr></thead>
+      <tbody id="f-rebal-body"></tbody>
+    </table></div>
+  </div>
+
+  <div class="sec-title">Backup</div>
+  <div class="data-actions">
+    <button class="data-btn" onclick="exportData('figli')">⬇ Esporta JSON</button>
+    <button class="data-btn" onclick="document.getElementById('f-imp').click()">⬆ Importa JSON</button>
+    <input type="file" accept=".json" class="file-input" id="f-imp">
+  </div>
+  <div class="data-actions">
+    <button class="data-btn" style="background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:var(--green)" onclick="document.getElementById('f-csv-imp').click()">📥 Importa CSV Trade Republic</button>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- File inputs statici a livello body -->
+<input type="file" accept=".csv" class="file-input" id="p-csv-imp">
+<input type="file" accept=".csv" class="file-input" id="f-csv-imp">
+
+<nav class="tab-nav" id="tabNav">
+  <div class="tab-ind" id="tabInd"></div>
+  <button class="tab-btn active" id="tab-personale" onclick="switchTab('personale')">
+    <span class="tab-icon">👤</span>Personale
+  </button>
+  <button class="tab-btn" id="tab-figli" onclick="switchTab('figli')">
+    <span class="tab-icon">👨‍👧‍👦</span>Figli
+  </button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ PASSWORD ═════════════════════════════════════════════════════════════════
+const PWD_HASH='07c7250d54e5df014321dd2c8d2d13369e1c625b3577e43315633789ec420ded';
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function doLogin(){
+  const p=document.getElementById('loginPwd').value;
+  if(!p){document.getElementById('loginErr').textContent='Inserisci la password';return;}
+  if(await sha256(p)===PWD_HASH){
+    sessionStorage.setItem('pfAuth','1');
+    document.getElementById('loginScreen').classList.add('hidden');
+    initApp();
+  } else {
+    document.getElementById('loginErr').textContent='Password errata';
+    document.getElementById('loginPwd').value='';
+    document.getElementById('loginPwd').focus();
+  }
+}
+function checkAuth(){
+  if(sessionStorage.getItem('pfAuth')==='1'){document.getElementById('loginScreen').classList.add('hidden');initApp();}
+}
+
+// ══ DATI DEFAULT ══════════════════════════════════════════════════════════════
+// transactions: array di {date, shares, priceEur} per ogni ETF
+// Il carico e le quote vengono calcolati dalle transazioni
+const DEFAULT = {
+  personale: {
+    etfs: [
+      { id:'p-swda', name:'iShares Core MSCI World',   ticker:'SWDA', priceEur:null, target:0.40, drift:0.10, transactions:[] },
+      { id:'p-eimi', name:'iShares Core MSCI EM IMI',  ticker:'EIMI', priceEur:null, target:0.20, drift:0.05, transactions:[] },
+      { id:'p-sgld', name:'Invesco Physical Gold ETC', ticker:'SGLD', priceEur:null, target:0.15, drift:0.05, transactions:[] },
+      { id:'p-cmod', name:'Div. Commodity Swap EUR (Acc)', ticker:'CMOD', priceEur:null, target:0.10, drift:0.05, transactions:[] },
+      { id:'p-aggh', name:'Global Aggregate Bond',     ticker:'AGGH', priceEur:null, target:0.15, drift:0.05, transactions:[] },
+    ],
+    btcLedger: { btc:0.02067091, caricoEur:1176.48, transactions:[
+      {date:'2024-03-10', btc:0.01426598, caricoEur:811.94},
+      {date:'2025-07-03', btc:0.00640493, caricoEur:364.54},
+    ]},
+    btcKraken: { btc:0.01255871, caricoEur:959.36, transactions:[
+      {date:'2025-10-13', btc:0.00201745, caricoEur:154.11},
+      {date:'2025-10-19', btc:0.00053433, caricoEur:40.81},
+      {date:'2025-11-02', btc:0.00051725, caricoEur:39.51},
+      {date:'2025-11-16', btc:0.00059753, caricoEur:45.65},
+      {date:'2025-11-30', btc:0.00062769, caricoEur:47.95},
+      {date:'2025-12-14', btc:0.00064032, caricoEur:48.91},
+      {date:'2025-12-28', btc:0.00066175, caricoEur:50.55},
+      {date:'2026-01-18', btc:0.00059837, caricoEur:45.71},
+      {date:'2026-02-01', btc:0.00076373, caricoEur:58.34},
+      {date:'2026-02-15', btc:0.00084870, caricoEur:64.83},
+      {date:'2026-03-01', btc:0.00088361, caricoEur:67.50},
+      {date:'2026-03-15', btc:0.00078015, caricoEur:59.60},
+      {date:'2026-03-30', btc:0.00084916, caricoEur:64.86},
+      {date:'2026-04-19', btc:0.00077077, caricoEur:58.88},
+      {date:'2026-05-03', btc:0.00073526, caricoEur:56.17},
+      {date:'2026-05-17', btc:0.00073264, caricoEur:55.97},
+    ]},
+    pac: 200,
+  },
+  figli: {
+    etfs: [
+      { id:'f-swda', name:'iShares Core MSCI World',   ticker:'SWDA', priceEur:null, target:0.40, drift:0.10, transactions:[] },
+      { id:'f-eimi', name:'iShares Core MSCI EM IMI',  ticker:'EIMI', priceEur:null, target:0.20, drift:0.05, transactions:[] },
+      { id:'f-sgld', name:'Invesco Physical Gold ETC', ticker:'SGLD', priceEur:null, target:0.20, drift:0.05, transactions:[] },
+      { id:'f-cmod', name:'Div. Commodity Swap USD (Acc)', ticker:'CMOD-USD', priceEur:null, target:0.20, drift:0.05, transactions:[] },
+    ],
+    gold: { grams:60, pricePerGram:null, caricoEur:4800 },
+    pac: 250,
+  },
+};
+
+// Transazioni iniziali dal foglio Excel
+const INIT_TX = {
+  // ── PERSONALE ──
+  'p-swda': [
+    {date:'2026-02-16', shares:21.858976, priceEur:112.080},
+    {date:'2026-03-16', shares:0.890218,  priceEur:112.332},
+    {date:'2026-04-16', shares:0.869149,  priceEur:115.055},
+  ],
+  'p-eimi': [
+    {date:'2026-02-16', shares:24.842075, priceEur:42.270},
+    {date:'2026-03-16', shares:2.416684,  priceEur:41.379},
+    {date:'2026-04-16', shares:2.028257,  priceEur:43.387},
+  ],
+  'p-sgld': [
+    {date:'2026-02-16', shares:17.076294, priceEur:81.990},
+  ],
+  'p-cmod': [
+    {date:'2026-02-16', shares:24.678300, priceEur:28.370},
+    {date:'2026-04-16', shares:0.181928,  priceEur:32.980},
+  ],
+  'p-aggh': [
+    {date:'2026-02-16', shares:281.299604, priceEur:4.980},
+  ],
+  // ── FIGLI ──
+  'f-swda': [
+    {date:'2024-06-14', shares:0.128610,  priceEur:93.958},
+    {date:'2024-06-14', shares:2.000000,  priceEur:93.958},
+    {date:'2024-06-17', shares:1.053886,  priceEur:93.938},
+    {date:'2024-07-16', shares:1.037376,  priceEur:96.397},
+    {date:'2024-08-16', shares:1.063354,  priceEur:94.042},
+    {date:'2024-09-16', shares:1.055331,  priceEur:94.757},
+    {date:'2024-10-16', shares:0.503448,  priceEur:99.315},
+    {date:'2024-11-18', shares:0.490431,  priceEur:101.951},
+    {date:'2024-12-16', shares:0.472397,  priceEur:105.843},
+    {date:'2025-01-16', shares:0.473036,  priceEur:105.700},
+    {date:'2025-02-17', shares:0.461573,  priceEur:108.325},
+    {date:'2025-03-17', shares:0.508817,  priceEur:98.267},
+    {date:'2025-04-16', shares:1.117168,  priceEur:89.512},
+    {date:'2025-05-16', shares:0.994737,  priceEur:100.529},
+    {date:'2025-06-16', shares:1.005732,  priceEur:99.430},
+    {date:'2026-01-16', shares:1.624465,  priceEur:114.499},
+    {date:'2026-03-16', shares:0.614316,  priceEur:112.320},
+    {date:'2026-04-16', shares:0.981882,  priceEur:115.085},
+    {date:'2026-05-18', shares:0.991783,  priceEur:120.994},
+    {date:'2026-06-16', shares:0.482902,  priceEur:124.249},
+  ],
+  'f-eimi': [
+    {date:'2024-10-16', shares:0.749378,  priceEur:33.361},
+    {date:'2024-11-18', shares:0.766541,  priceEur:32.614},
+    {date:'2024-12-16', shares:0.747451,  priceEur:33.447},
+    {date:'2025-01-16', shares:0.757713,  priceEur:32.994},
+    {date:'2025-02-17', shares:0.734473,  priceEur:34.038},
+    {date:'2025-03-17', shares:0.758403,  priceEur:32.964},
+    {date:'2025-04-16', shares:1.687421,  priceEur:29.631},
+    {date:'2025-05-16', shares:1.505343,  priceEur:33.215},
+    {date:'2025-06-16', shares:1.503216,  priceEur:33.262},
+    {date:'2025-08-18', shares:0.740740,  priceEur:35.100},
+    {date:'2025-09-16', shares:1.262660,  priceEur:36.431},
+    {date:'2025-10-16', shares:1.744324,  priceEur:37.837},
+    {date:'2025-11-17', shares:1.979269,  priceEur:38.398},
+    {date:'2025-12-16', shares:2.429280,  priceEur:37.048},
+    {date:'2026-01-16', shares:1.566899,  priceEur:40.845},
+    {date:'2026-03-16', shares:4.374199,  priceEur:41.379},
+    {date:'2026-06-16', shares:0.327338,  priceEur:48.879},
+  ],
+  'f-sgld': [
+    {date:'2025-07-16', shares:0.451393,  priceEur:276.920},
+    {date:'2025-08-18', shares:0.406003,  priceEur:275.860},
+    {date:'2025-09-16', shares:0.338106,  priceEur:301.680},
+    {date:'2025-10-16', shares:0.277301,  priceEur:349.800},
+    {date:'2025-11-17', shares:0.260740,  priceEur:337.500},
+    {date:'2025-12-16', shares:0.179630,  priceEur:350.720},
+    {date:'2026-02-16', shares:0.373721,  priceEur:406.720},
+    {date:'2026-04-16', shares:0.068677,  priceEur:393.140},
+    {date:'2026-05-18', shares:0.345542,  priceEur:376.220},
+  ],
+  'f-cmod': [
+    {date:'2025-07-16', shares:19.589406, priceEur:6.381},
+    {date:'2025-08-18', shares:18.226200, priceEur:6.145},
+    {date:'2025-09-16', shares:15.954950, priceEur:6.393},
+    {date:'2025-10-16', shares:13.209839, priceEur:6.586},
+    {date:'2025-11-17', shares:12.619222, priceEur:6.815},
+    {date:'2025-12-16', shares:14.588659, priceEur:6.649},
+    {date:'2026-02-16', shares:13.607331, priceEur:7.202},
+    {date:'2026-04-16', shares:13.129625, priceEur:8.378},
+    {date:'2026-06-16', shares:21.381174, priceEur:8.138},
+  ],
+};
+
+const DATA_VER = 'v12';
+let ST = (()=>{
+  try {
+    if(localStorage.getItem('pfVer')!==DATA_VER){
+      localStorage.removeItem('pfData');
+      localStorage.setItem('pfVer',DATA_VER);
+    }
+    const s=localStorage.getItem('pfData');
+    if(s) return JSON.parse(s);
+    // Prima volta: carica DEFAULT con transazioni iniziali
+    const d=JSON.parse(JSON.stringify(DEFAULT));
+    [...d.personale.etfs,...d.figli.etfs].forEach(e=>{
+      if(INIT_TX[e.id]) e.transactions=JSON.parse(JSON.stringify(INIT_TX[e.id]));
+    });
+    return d;
+  }catch(e){return JSON.parse(JSON.stringify(DEFAULT));}
+})();
+
+let btcEur=0, currentTab='personale';
+function save(){
+  localStorage.setItem('pfData',JSON.stringify(ST));
+  saveToFirebase();
+}
+
+// ══ CALCOLI ETF ═══════════════════════════════════════════════════════════════
+function etfCalc(etf){
+  const tx=etf.transactions||[];
+  const shares=tx.reduce((s,t)=>s+t.shares,0);
+  const carico=tx.reduce((s,t)=>s+t.shares*t.priceEur,0);
+  const avgPrice=shares>0?carico/shares:0;
+  const price=etf.priceEur;
+  const value=price?price*shares:null;
+  const gain=value!==null?value-carico:null;
+  const gainPct=gain!==null&&carico>0?gain/carico:null;
+  return {shares,carico,avgPrice,price,value,gain,gainPct};
+}
+
+// ══ FORMAT ════════════════════════════════════════════════════════════════════
+const FI2=new Intl.NumberFormat('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
+const FI0=new Intl.NumberFormat('it-IT',{minimumFractionDigits:0,maximumFractionDigits:0});
+const FI4=new Intl.NumberFormat('it-IT',{minimumFractionDigits:2,maximumFractionDigits:4});
+function f2(v){return(v===null||v===undefined||isNaN(v))?'—':FI2.format(v);}
+function f0(v){return(v===null||v===undefined||isNaN(v))?'—':FI0.format(v);}
+function fE(v){return'€'+f2(v);}
+function fP(v){if(v===null||v===undefined||isNaN(v))return'—';return(v*100).toFixed(1).replace('.',',')+' %';}
+function gc(v){return v>0.001?'pos':v<-0.001?'neg':'neu';}
+function gs(v){return v>0.001?'+':'';}
+
+// ══ FETCH BTC ════════════════════════════════════════════════════════════════
+let refreshing=false;
+async function refreshBTC(){
+  if(refreshing)return; refreshing=true;
+  setLive('loading','Aggiornamento BTC…');
+  document.getElementById('refreshIcon').classList.add('spin');
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur',{signal:AbortSignal.timeout(8000)});
+    const d=await r.json();
+    if(d?.bitcoin?.eur){btcEur=d.bitcoin.eur;}
+    else throw new Error('no price');
+  }catch(e){
+    try{
+      const [br,er]=await Promise.all([
+        fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT',{signal:AbortSignal.timeout(6000)}),
+        fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT',{signal:AbortSignal.timeout(6000)}),
+      ]);
+      const bd=await br.json(),ed=await er.json();
+      btcEur=parseFloat(bd.price)/parseFloat(ed.price);
+    }catch(e2){setLive('error','Errore BTC');refreshing=false;document.getElementById('refreshIcon').classList.remove('spin');return;}
+  }
+  const now=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  setLive('ok','BTC aggiornato alle '+now);
+  refreshing=false;
+  document.getElementById('refreshIcon').classList.remove('spin');
+  renderAll();
+}
+
+function setLive(s,label){
+  document.getElementById('liveDot').className='dot'+(s==='loading'?' loading':s==='error'?' error':'');
+  document.getElementById('liveLbl').textContent=label;
+}
+
+// ══ RENDER ETF CARD ══════════════════════════════════════════════════════════
+function renderETFCard(portfolio, containerId){
+  const s=ST[portfolio];
+  const pac=s.pac;
+  let html='<div class="card-hdr"><div><div class="card-title">ETF '+(portfolio==='personale'?'Personali':'Figli')+'</div><div class="card-sub">PAC mensile €'+pac+' · '+s.etfs.length+' strumenti</div></div><span class="badge badge-etf">Trade Republic</span></div>';
+
+  let totalVal=0, totalCarico=0;
+  const calcs=s.etfs.map(e=>{const c=etfCalc(e);if(c.value)totalVal+=c.value;else totalVal+=c.carico;totalCarico+=c.carico;return{etf:e,c};});
+
+  calcs.forEach(({etf,c})=>{
+    const hasPrice=c.price!==null;
+    const dispVal=c.value!==null?c.value:c.carico;
+    const allocPct=totalVal>0?dispVal/totalVal:0;
+    const barW=Math.min(100,allocPct*100);
+    const targetW=Math.min(100,etf.target*100);
+    const barColor=c.gain!==null?(c.gain>=0?'var(--green)':'var(--red)'):'var(--muted)';
+
+    html+=`<div class="etf-block" id="block-${etf.id}">
+      <div class="etf-top">
+        <div class="etf-left">
+          <div class="etf-name">${etf.name}</div>
+          <div class="etf-detail">${FI4.format(c.shares)} quote${hasPrice?' · €'+f2(c.price):'  · prezzo non inserito'}</div>
+        </div>
+        <div class="etf-right">
+          <div class="etf-val">${fE(dispVal)}${!hasPrice?'<span style="color:var(--muted);font-size:10px"> *</span>':''}</div>
+          <div class="etf-gain ${gc(c.gain)}">${c.gain!==null?gs(c.gain)+fE(c.gain)+' ('+gs(c.gainPct)+fP(c.gainPct)+')':'—'}</div>
+        </div>
+      </div>
+      <div class="etf-meta">
+        <div class="meta-item"><div class="meta-lbl">Prezzo medio</div><div class="meta-val">${fE(c.avgPrice)}</div></div>
+        <div class="meta-item"><div class="meta-lbl">Prezzo attuale</div><div class="meta-val ${hasPrice?'':'neu'}">${hasPrice?fE(c.price):'—'}</div></div>
+        <div class="meta-item"><div class="meta-lbl">Investito</div><div class="meta-val">${fE(c.carico)}</div></div>
+        <div class="meta-item"><div class="meta-lbl">Controvalore</div><div class="meta-val">${c.value!==null?fE(c.value):'—'}</div></div>
+      </div>
+      <div class="alloc-wrap">
+        <div class="alloc-labels"><span>Allocaz.: <b>${fP(allocPct)}</b></span><span>Target: <b>${fP(etf.target)}</b></span></div>
+        <div class="alloc-bg"><div class="alloc-fill" style="width:${barW.toFixed(1)}%;background:${barColor}"></div><div class="alloc-target" style="left:${targetW.toFixed(1)}%"></div></div>
+      </div>
+      <div class="etf-actions">
+        <button class="btn-sm primary" onclick="togglePrice('${etf.id}')">💰 Prezzo</button>
+        <button class="btn-sm" onclick="toggleTx('${etf.id}')">+ Transazione</button>
+      </div>
+      ${renderTxList(etf)}
+    </div>
+    <div class="price-edit" id="price-${etf.id}">
+      <div class="price-edit-row">
+        <input class="price-input" type="number" step="0.01" id="pinput-${etf.id}" placeholder="Prezzo in € (es. 98,45)" onkeydown="if(event.key==='Enter')savePrice('${etf.id}')">
+        <button class="confirm-btn" onclick="savePrice('${etf.id}')">Salva</button>
+      </div>
+    </div>
+    <div class="tx-panel" id="tx-${etf.id}">
+      <div class="tx-panel-title">Nuova transazione — ${etf.ticker}</div>
+      <div class="tx-row">
+        <div class="tx-field"><div class="tx-label">Data</div><input class="tx-input" type="date" id="txdate-${etf.id}" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="tx-field"><div class="tx-label">Quote acquistate</div><input class="tx-input" type="number" step="0.000001" placeholder="es. 2.5" id="txshares-${etf.id}"></div>
+      </div>
+      <div class="tx-field"><div class="tx-label">Prezzo per quota (€)</div><input class="tx-input" type="number" step="0.01" placeholder="es. 98.45" id="txprice-${etf.id}"></div>
+      <div class="tx-btns">
+        <button class="tx-add-btn" onclick="addTx('${etf.id}','${portfolio}')">✓ Aggiungi</button>
+        <button class="tx-cancel-btn" onclick="toggleTx('${etf.id}')">Annulla</button>
+      </div>
+    </div>`;
+  });
+
+  // Card total
+  const totalGain=totalVal-totalCarico;
+  const totalGainPct=totalCarico>0?totalGain/totalCarico:0;
+  html+=`<div class="card-total">
+    <span class="card-total-lbl">Totale ETF</span>
+    <div class="card-total-val">${fE(totalVal)}<div class="card-total-sub ${gc(totalGain)}">${gs(totalGain)}${fE(totalGain)} (${gs(totalGainPct)}${fP(totalGainPct)})</div></div>
+  </div>`;
+
+  document.getElementById(containerId).innerHTML=html;
+  return{totalVal,totalCarico};
+}
+
+function renderTxList(etf){
+  const tx=etf.transactions||[];
+  if(!tx.length) return '<div style="padding:8px 0;font-size:12px;color:var(--muted)">Nessuna transazione registrata</div>';
+  const sorted=[...tx].sort((a,b)=>b.date.localeCompare(a.date));
+  const last=sorted[0];
+  const lastIdx=tx.findIndex(t=>t.date===last.date&&t.shares===last.shares&&t.priceEur===last.priceEur);
+
+  let html=`<div class="tx-list">
+    <div class="tx-list-title">Ultima transazione</div>
+    <div class="tx-item">
+      <div class="tx-item-left">📅 ${last.date} · ${FI4.format(last.shares)} quote · €${f2(last.priceEur)}</div>
+      <div class="tx-item-right">${fE(last.shares*last.priceEur)}</div>
+      <button class="tx-del" onclick="event.stopPropagation();delTx('${etf.id}',${lastIdx})">✕</button>
+    </div>`;
+
+  if(tx.length>1){
+    html+=`<details>
+      <summary style="font-size:11px;color:var(--blue);cursor:pointer;list-style:none;padding:6px 0;display:flex;align-items:center;gap:4px">
+        <span>▸ Tutte le ${tx.length} transazioni</span>
+      </summary>
+      <div style="margin-top:4px">`;
+    sorted.slice(1).forEach(t=>{
+      const idx=tx.findIndex(x=>x.date===t.date&&x.shares===t.shares&&x.priceEur===t.priceEur);
+      html+=`<div class="tx-item">
+        <div class="tx-item-left">${t.date} · ${FI4.format(t.shares)} quote · €${f2(t.priceEur)}</div>
+        <div class="tx-item-right">${fE(t.shares*t.priceEur)}</div>
+        <button class="tx-del" onclick="event.stopPropagation();delTx('${etf.id}',${idx})">✕</button>
+      </div>`;
+    });
+    html+=`</div></details>`;
+  }
+  html+='</div>';
+  return html;
+}
+
+// ══ INTERAZIONI ETF ══════════════════════════════════════════════════════════
+function togglePrice(id){
+  const el=document.getElementById('price-'+id);
+  const isOpen=el.classList.contains('open');
+  document.querySelectorAll('.price-edit.open,.tx-panel.open').forEach(e=>e.classList.remove('open'));
+  if(!isOpen){el.classList.add('open');setTimeout(()=>document.getElementById('pinput-'+id).focus(),100);}
+}
+
+function savePrice(id){
+  const val=parseFloat(document.getElementById('pinput-'+id).value.replace(',','.'));
+  if(isNaN(val)||val<=0){showToast('Prezzo non valido','error');return;}
+  const etf=findETF(id);
+  if(!etf)return;
+  etf.priceEur=val;
+  // Sincronizza il prezzo su tutti gli ETF con lo stesso ticker
+  const allEtfs=[...ST.personale.etfs,...ST.figli.etfs];
+  let synced=0;
+  allEtfs.forEach(e=>{
+    if(e.id!==id && e.ticker===etf.ticker){
+      e.priceEur=val;
+      synced++;
+    }
+  });
+  save();
+  document.getElementById('price-'+id).classList.remove('open');
+  document.getElementById('pinput-'+id).value='';
+  renderAll();
+  showToast(synced>0?`Prezzo aggiornato su entrambi i portafogli ✓`:'Prezzo aggiornato ✓','success');
+}
+
+function toggleTx(id){
+  const el=document.getElementById('tx-'+id);
+  const isOpen=el.classList.contains('open');
+  document.querySelectorAll('.price-edit.open,.tx-panel.open').forEach(e=>e.classList.remove('open'));
+  if(!isOpen) el.classList.add('open');
+}
+
+function addTx(id,portfolio){
+  const date=document.getElementById('txdate-'+id).value;
+  const shares=parseFloat(document.getElementById('txshares-'+id).value.replace(',','.'));
+  const price=parseFloat(document.getElementById('txprice-'+id).value.replace(',','.'));
+  if(!date||isNaN(shares)||shares<=0||isNaN(price)||price<=0){showToast('Compila tutti i campi','error');return;}
+  const etf=findETF(id);
+  if(!etf)return;
+  etf.transactions.push({date,shares,priceEur:price});
+  etf.transactions.sort((a,b)=>a.date.localeCompare(b.date));
+  etf.priceEur=price; // aggiorna anche il prezzo corrente
+  save();
+  document.getElementById('tx-'+id).classList.remove('open');
+  document.getElementById('txshares-'+id).value='';
+  document.getElementById('txprice-'+id).value='';
+  renderAll();
+  showToast('Transazione aggiunta ✓','success');
+}
+
+function delTx(id,idx){
+  const etf=findETF(id);
+  if(!etf)return;
+  etf.transactions.splice(idx,1);
+  save();
+  renderAll();
+  showToast('Transazione rimossa','success');
+}
+
+function findETF(id){
+  return [...ST.personale.etfs,...ST.figli.etfs].find(e=>e.id===id)||null;
+}
+
+// ══ RENDER GOLD ═══════════════════════════════════════════════════════════════
+function renderGold(){
+  const g=ST.figli.gold;
+  const val=g.pricePerGram?g.pricePerGram*g.grams:null;
+  const gain=val!==null?val-g.caricoEur:null;
+  const gainPct=gain!==null?gain/g.caricoEur:null;
+  const hasPrice=g.pricePerGram!==null;
+
+  if(hasPrice) document.getElementById('gold-price-lbl').textContent=`€${f2(g.pricePerGram)}/g · €${f0(g.pricePerGram*31.1035)}/oz`;
+
+  document.getElementById('f-gold-block').innerHTML=`
+    <div class="etf-block">
+      <div class="etf-top">
+        <div class="etf-left"><div class="etf-name">Oro Fisico</div><div class="etf-detail">${g.grams}g${hasPrice?' · €'+f2(g.pricePerGram)+'/g':' · prezzo non inserito'}</div></div>
+        <div class="etf-right">
+          <div class="etf-val">${val!==null?fE(val):fE(g.caricoEur)+'*'}</div>
+          <div class="etf-gain ${gc(gain)}">${gain!==null?gs(gain)+fE(gain)+' ('+gs(gainPct)+fP(gainPct)+')':'—'}</div>
+        </div>
+      </div>
+      <div class="etf-meta">
+        <div class="meta-item"><div class="meta-lbl">Investito</div><div class="meta-val">${fE(g.caricoEur)}</div></div>
+        <div class="meta-item"><div class="meta-lbl">Prezzo attuale</div><div class="meta-val ${hasPrice?'':'neu'}">${hasPrice?fE(g.pricePerGram)+'/g':'—'}</div></div>
+      </div>
+      <div class="etf-actions">
+        <button class="btn-sm primary" onclick="toggleGoldPrice()">💰 Aggiorna Prezzo</button>
+      </div>
+    </div>
+    <div class="price-edit" id="price-gold">
+      <div class="price-edit-row">
+        <input class="price-input" type="number" step="0.01" id="pinput-gold" placeholder="Prezzo €/grammo (es. 85.50)" onkeydown="if(event.key==='Enter')saveGoldPrice()">
+        <button class="confirm-btn" onclick="saveGoldPrice()">Salva</button>
+      </div>
+    </div>`;
+
+  return {val:val||g.caricoEur, carico:g.caricoEur};
+}
+
+function toggleGoldPrice(){
+  const el=document.getElementById('price-gold');
+  const isOpen=el.classList.contains('open');
+  if(!isOpen){el.classList.add('open');setTimeout(()=>document.getElementById('pinput-gold').focus(),100);}
+  else el.classList.remove('open');
+}
+function saveGoldPrice(){
+  const val=parseFloat(document.getElementById('pinput-gold').value.replace(',','.'));
+  if(isNaN(val)||val<=0){showToast('Prezzo non valido','error');return;}
+  ST.figli.gold.pricePerGram=val;
+  save();
+  document.getElementById('price-gold').classList.remove('open');
+  document.getElementById('pinput-gold').value='';
+  renderAll();
+  showToast('Prezzo oro aggiornato ✓','success');
+}
+
+// ══ RENDER BTC ════════════════════════════════════════════════════════════════
+function btcTxListHtml(wallet, txKey){
+  const tx=(ST.personale[wallet].transactions||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(!tx.length) return '<div style="padding:6px 0;font-size:12px;color:var(--muted)">Nessuna transazione</div>';
+  const last=tx[0];
+  const lastIdx=ST.personale[wallet].transactions.findIndex(t=>t.date===last.date&&t.btc===last.btc);
+  let html=`<div class="tx-list">
+    <div class="tx-list-title">Ultima transazione</div>
+    <div class="tx-item">
+      <div class="tx-item-left">📅 ${last.date} · ${FI4.format(last.btc)} BTC · ${fE(last.caricoEur)}</div>
+      <div class="tx-item-right">${fE(last.caricoEur/last.btc)}/BTC</div>
+      <button class="tx-del" onclick="delBtcTx('${wallet}',${lastIdx})">✕</button>
+    </div>`;
+  if(tx.length>1){
+    html+=`<details><summary style="font-size:11px;color:var(--blue);cursor:pointer;list-style:none;padding:6px 0">▸ Tutte le ${tx.length} transazioni</summary><div style="margin-top:4px">`;
+    tx.slice(1).forEach(t=>{
+      const idx=ST.personale[wallet].transactions.findIndex(x=>x.date===t.date&&x.btc===t.btc);
+      html+=`<div class="tx-item">
+        <div class="tx-item-left">${t.date} · ${FI4.format(t.btc)} BTC · ${fE(t.caricoEur)}</div>
+        <div class="tx-item-right">${fE(t.caricoEur/t.btc)}/BTC</div>
+        <button class="tx-del" onclick="delBtcTx('${wallet}',${idx})">✕</button>
+      </div>`;
+    });
+    html+=`</div></details>`;
+  }
+  html+='</div>';
+  return html;
+}
+
+function renderBTC(){
+  const s=ST.personale;
+  const lBtc=s.btcLedger.transactions?s.btcLedger.transactions.reduce((sum,t)=>sum+t.btc,0):s.btcLedger.btc;
+  const kBtc=s.btcKraken.transactions?s.btcKraken.transactions.reduce((sum,t)=>sum+t.btc,0):s.btcKraken.btc;
+  const lCarico=s.btcLedger.transactions?s.btcLedger.transactions.reduce((sum,t)=>sum+t.caricoEur,0):s.btcLedger.caricoEur;
+  const kCarico=s.btcKraken.transactions?s.btcKraken.transactions.reduce((sum,t)=>sum+t.caricoEur,0):s.btcKraken.caricoEur;
+  const lVal=btcEur?btcEur*lBtc:null;
+  const kVal=btcEur?btcEur*kBtc:null;
+  const lGain=lVal!==null?lVal-lCarico:null;
+  const kGain=kVal!==null?kVal-kCarico:null;
+  const totVal=(lVal||lCarico)+(kVal||kCarico);
+  const totCarico=lCarico+kCarico;
+  const totGain=totVal-totCarico;
+  const totGainPct=totCarico>0?totGain/totCarico:0;
+
+  if(btcEur) document.getElementById('btc-price-lbl').textContent=`Prezzo live: €${f0(btcEur)}/BTC`;
+
+  document.getElementById('p-btc-blocks').innerHTML=`
+    <div class="etf-block">
+      <div class="etf-top">
+        <div class="etf-left">
+          <div class="etf-name">BTC Ledger</div>
+          <div class="etf-detail">${FI4.format(lBtc)} BTC · inv. ${fE(lCarico)}</div>
+        </div>
+        <div class="etf-right">
+          <div class="etf-val">${lVal!==null?fE(lVal):fE(lCarico)+'*'}</div>
+          <div class="etf-gain ${gc(lGain)}">${lGain!==null?gs(lGain)+fE(lGain):'—'}</div>
+        </div>
+      </div>
+      ${btcTxListHtml('btcLedger','ledger')}
+      <div class="etf-actions" style="margin-top:10px">
+        <button class="btn-sm" onclick="toggleBtcTx('btcLedger')">+ Transazione</button>
+      </div>
+    </div>
+    <div class="price-edit" id="tx-btcLedger">
+      <div class="tx-panel-title">Nuova transazione — BTC Ledger</div>
+      <div class="tx-row">
+        <div class="tx-field"><div class="tx-label">Data</div><input class="tx-input" type="date" id="btcdate-btcLedger" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="tx-field"><div class="tx-label">BTC acquistati</div><input class="tx-input" type="number" step="0.00000001" placeholder="es. 0.005" id="btcamt-btcLedger"></div>
+      </div>
+      <div class="tx-field"><div class="tx-label">Importo investito (€)</div><input class="tx-input" type="number" step="0.01" placeholder="es. 500.00" id="btceur-btcLedger"></div>
+      <div class="tx-btns">
+        <button class="tx-add-btn" onclick="addBtcTx('btcLedger')">✓ Aggiungi</button>
+        <button class="tx-cancel-btn" onclick="toggleBtcTx('btcLedger')">Annulla</button>
+      </div>
+    </div>
+
+    <div class="etf-block">
+      <div class="etf-top">
+        <div class="etf-left">
+          <div class="etf-name">BTC Kraken</div>
+          <div class="etf-detail">${FI4.format(kBtc)} BTC · inv. ${fE(kCarico)}</div>
+        </div>
+        <div class="etf-right">
+          <div class="etf-val">${kVal!==null?fE(kVal):fE(kCarico)+'*'}</div>
+          <div class="etf-gain ${gc(kGain)}">${kGain!==null?gs(kGain)+fE(kGain):'—'}</div>
+        </div>
+      </div>
+      ${btcTxListHtml('btcKraken','kraken')}
+      <div class="etf-actions" style="margin-top:10px">
+        <button class="btn-sm" onclick="toggleBtcTx('btcKraken')">+ Transazione</button>
+      </div>
+    </div>
+    <div class="price-edit" id="tx-btcKraken">
+      <div class="tx-panel-title">Nuova transazione — BTC Kraken</div>
+      <div class="tx-row">
+        <div class="tx-field"><div class="tx-label">Data</div><input class="tx-input" type="date" id="btcdate-btcKraken" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="tx-field"><div class="tx-label">BTC acquistati</div><input class="tx-input" type="number" step="0.00000001" placeholder="es. 0.001" id="btcamt-btcKraken"></div>
+      </div>
+      <div class="tx-field"><div class="tx-label">Importo investito (€)</div><input class="tx-input" type="number" step="0.01" placeholder="es. 60.00" id="btceur-btcKraken"></div>
+      <div class="tx-btns">
+        <button class="tx-add-btn" onclick="addBtcTx('btcKraken')">✓ Aggiungi</button>
+        <button class="tx-cancel-btn" onclick="toggleBtcTx('btcKraken')">Annulla</button>
+      </div>
+    </div>`;
+
+  document.getElementById('p-btc-sum').innerHTML=fE(totVal)+'<div class="card-total-sub '+gc(totGain)+'">'+(gs(totGain))+fE(totGain)+' ('+gs(totGainPct)+fP(totGainPct)+')</div>';
+  return{totVal,totCarico};
+}
+
+function toggleBtcTx(wallet){
+  const el=document.getElementById('tx-'+wallet);
+  const isOpen=el.classList.contains('open');
+  document.querySelectorAll('.price-edit.open').forEach(e=>e.classList.remove('open'));
+  if(!isOpen) el.classList.add('open');
+}
+
+function addBtcTx(wallet){
+  const date=document.getElementById('btcdate-'+wallet).value;
+  const btc=parseFloat(document.getElementById('btcamt-'+wallet).value.replace(',','.'));
+  const eur=parseFloat(document.getElementById('btceur-'+wallet).value.replace(',','.'));
+  if(!date||isNaN(btc)||btc<=0||isNaN(eur)||eur<=0){showToast('Compila tutti i campi','error');return;}
+  if(!ST.personale[wallet].transactions) ST.personale[wallet].transactions=[];
+  ST.personale[wallet].transactions.push({date,btc,caricoEur:eur});
+  ST.personale[wallet].transactions.sort((a,b)=>a.date.localeCompare(b.date));
+  // Aggiorna totali
+  ST.personale[wallet].btc=ST.personale[wallet].transactions.reduce((s,t)=>s+t.btc,0);
+  ST.personale[wallet].caricoEur=ST.personale[wallet].transactions.reduce((s,t)=>s+t.caricoEur,0);
+  save(); toggleBtcTx(wallet); renderAll();
+  showToast('Transazione BTC aggiunta ✓','success');
+}
+
+function delBtcTx(wallet,idx){
+  ST.personale[wallet].transactions.splice(idx,1);
+  ST.personale[wallet].btc=ST.personale[wallet].transactions.reduce((s,t)=>s+t.btc,0);
+  ST.personale[wallet].caricoEur=ST.personale[wallet].transactions.reduce((s,t)=>s+t.caricoEur,0);
+  save(); renderAll();
+  showToast('Transazione rimossa','success');
+}
+
+// ══ RIBILANCIAMENTO ══════════════════════════════════════════════════════════
+function renderRebalance(prefix,etfs,etfTotal,pac){
+  const tbody=document.getElementById(prefix+'-rebal-body');
+  const postPac=etfTotal+pac;
+  let needsAction=false;
+  const totalBuyNeeded=etfs.reduce((s,etf)=>{
+    const{value,carico}=etfCalc(etf);
+    const v=value||carico;
+    const diff=etf.target*postPac-v;
+    return s+(diff>0?diff:0);
+  },0);
+
+  let html='';
+  etfs.forEach(etf=>{
+    const{shares,carico,price,value}=etfCalc(etf);
+    const v=value||carico;
+    const currAlloc=etfTotal>0?v/etfTotal:0;
+    const drift=currAlloc-etf.target;
+    const diff=etf.target*postPac-v;
+    let effDiff=diff;
+    if(diff>0&&totalBuyNeeded>pac) effDiff=(diff/totalBuyNeeded)*pac;
+    const effShares=price&&effDiff>0?effDiff/price:null;
+    const driftWarn=Math.abs(drift)>etf.drift;
+    let act,cls;
+    if(Math.abs(effDiff)<0.5){act='✓ OK';cls='act-ok';}
+    else if(effDiff>0){act='BUY';cls='act-buy';needsAction=true;}
+    else{act='SELL';cls='act-sell';needsAction=true;}
+    html+=`<tr>
+      <td title="${etf.name}">${etf.ticker}</td>
+      <td>${fP(etf.target)}</td>
+      <td class="${driftWarn?'drift-warn':''}">${fP(currAlloc)}</td>
+      <td class="${driftWarn?'drift-warn':''}">${gs(drift)}${fP(drift)}</td>
+      <td class="${cls}">${Math.abs(effDiff)>0.5?(effDiff>0?'+':'-')+fE(Math.abs(effDiff)):'—'}</td>
+      <td class="${cls}">${effShares?'+'+FI4.format(effShares):'—'}</td>
+      <td class="${cls}"><b>${act}</b></td>
+    </tr>`;
+  });
+  tbody.innerHTML=html;
+  const badge=document.getElementById(prefix+'-rebal-badge');
+  if(needsAction){badge.textContent='RIBILANCIARE';badge.style.background='rgba(245,158,11,.15)';badge.style.color='var(--gold)';}
+  else{badge.textContent='BILANCIATO';badge.style.background='rgba(16,185,129,.15)';badge.style.color='var(--green)';}
+}
+
+// ══ RENDER ALL ════════════════════════════════════════════════════════════════
+function renderAll(){
+  // Personale ETF
+  const{totalVal:pEtfVal,totalCarico:pEtfCarico}=renderETFCard('personale','p-etf-card');
+  const{totVal:pBtcVal,totCarico:pBtcCarico}=renderBTC();
+  const pTot=pEtfVal+pBtcVal, pCar=pEtfCarico+pBtcCarico;
+  const pGain=pTot-pCar, pGainPct=pCar>0?pGain/pCar:0;
+  document.getElementById('p-etf-tot').textContent=fE(pEtfVal);
+  document.getElementById('p-btc-tot').textContent=fE(pBtcVal);
+  document.getElementById('p-carico').textContent=fE(pCar);
+  const pgEl=document.getElementById('p-gain');
+  pgEl.className='sum-val '+gc(pGain);
+  pgEl.innerHTML=gs(pGain)+fE(pGain)+'<span style="font-size:11px;display:block;font-weight:500">'+gs(pGainPct)+fP(pGainPct)+'</span>';
+  renderRebalance('p',ST.personale.etfs,pEtfVal,ST.personale.pac);
+
+  // Figli ETF
+  const{totalVal:fEtfVal,totalCarico:fEtfCarico}=renderETFCard('figli','f-etf-card');
+  const{val:fGoldVal,carico:fGoldCarico}=renderGold();
+  const fTot=fEtfVal+fGoldVal, fCar=fEtfCarico+fGoldCarico;
+  const fGain=fTot-fCar, fGainPct=fCar>0?fGain/fCar:0;
+  document.getElementById('f-etf-tot').textContent=fE(fEtfVal);
+  document.getElementById('f-gold-tot').textContent=fE(fGoldVal);
+  document.getElementById('f-carico').textContent=fE(fCar);
+  const fgEl=document.getElementById('f-gain');
+  fgEl.className='sum-val '+gc(fGain);
+  fgEl.innerHTML=gs(fGain)+fE(fGain)+'<span style="font-size:11px;display:block;font-weight:500">'+gs(fGainPct)+fP(fGainPct)+'</span>';
+  renderRebalance('f',ST.figli.etfs,fEtfVal,ST.figli.pac);
+
+  renderTopBar();
+}
+
+function renderTopBar(){
+  const isP=currentTab==='personale';
+  document.getElementById('viewLabel').textContent=isP?'Portafoglio Personale':'Portafoglio Figli';
+  const s=isP?ST.personale:ST.figli;
+  let val=0,carico=0;
+  s.etfs.forEach(e=>{const c=etfCalc(e);val+=c.value||c.carico;carico+=c.carico;});
+  if(isP){
+    val+=(btcEur?btcEur*(s.btcLedger.btc+s.btcKraken.btc):(s.btcLedger.caricoEur+s.btcKraken.caricoEur));
+    carico+=s.btcLedger.caricoEur+s.btcKraken.caricoEur;
+  } else {
+    const g=s.gold;
+    val+=g.pricePerGram?g.pricePerGram*g.grams:g.caricoEur;
+    carico+=g.caricoEur;
+  }
+  const gain=val-carico,gainPct=carico>0?gain/carico:0;
+  document.getElementById('totalValue').textContent=fE(val);
+  const gE=document.getElementById('totalGainEur');
+  gE.textContent=gs(gain)+fE(gain); gE.className='port-gain '+gc(gain);
+  const gP=document.getElementById('totalGainPct');
+  gP.textContent=gs(gainPct)+fP(gainPct); gP.className='port-gain '+gc(gainPct);
+}
+
+// ══ TAB ══════════════════════════════════════════════════════════════════════
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  const btn=document.getElementById('tab-'+tab);
+  const nav=document.getElementById('tabNav');
+  const ind=document.getElementById('tabInd');
+  const br=btn.getBoundingClientRect(),nr=nav.getBoundingClientRect();
+  ind.style.left=(br.left-nr.left)+'px';ind.style.width=br.width+'px';
+  renderTopBar();
+}
+
+// ══ CSV IMPORT TR ════════════════════════════════════════════════════════════
+const ISIN_TO_ETF = {
+  'IE00B4L5Y983': {personale:'p-swda', figli:'f-swda'},
+  'IE00BKM4GZ66': {personale:'p-eimi', figli:'f-eimi'},
+  'IE00B579F325': {personale:'p-sgld', figli:'f-sgld'},
+  'IE00BD6HBR51': {personale:'p-cmod', figli:null},      // EUR version - solo personale
+  'IE00BDFL4P12': {personale:null,     figli:'f-cmod'},   // USD version - solo figli
+  'IE00BDBRDM35': {personale:'p-aggh', figli:null},
+  'IE00B3F81R35': {personale:'p-aggh', figli:null},
+};
+
+// Parser CSV corretto che gestisce i campi tra virgolette
+function parseCSVLine(line){
+  const result=[];
+  let cur='', inQuote=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){inQuote=!inQuote;}
+    else if(ch===','&&!inQuote){result.push(cur.trim());cur='';}
+    else{cur+=ch;}
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function importCSV(event, portfolio){
+  const file=event.target.files[0]; if(!file)return;
+  showToast('Lettura file in corso…','');
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const text=e.target.result;
+      const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+      showToast(`File letto: ${lines.length} righe, portfolio: ${portfolio}`,'');
+      setTimeout(()=>{
+        const header=parseCSVLine(lines[0]).map(h=>h.toLowerCase());
+        const ci={
+          date:   header.indexOf('date'),
+          type:   header.indexOf('type'),
+          symbol: header.indexOf('symbol'),
+          shares: header.indexOf('shares'),
+          price:  header.indexOf('price'),
+          amount: header.indexOf('amount'),
+        };
+        console.log('Header trovato:', header);
+        console.log('Indici colonne:', ci);
+
+        let added=0, skipped=0, buys=0;
+        const allEtfs=[...ST.personale.etfs,...ST.figli.etfs];
+
+        lines.slice(1).forEach(line=>{
+          const vals=parseCSVLine(line);
+          if(vals[ci.type]!=='BUY') return;
+          buys++;
+          const isin=vals[ci.symbol];
+          const map=ISIN_TO_ETF[isin];
+          if(!map){console.log('ISIN non trovato:',isin);return;}
+          const etfId=map[portfolio];
+          if(!etfId){console.log('ETF non mappato per portfolio',portfolio,'isin',isin);return;}
+          const etf=allEtfs.find(e=>e.id===etfId);
+          if(!etf){console.log('ETF non trovato in ST:',etfId);return;}
+
+          const date=vals[ci.date];
+          const shares=parseFloat(vals[ci.shares]);
+          const price=parseFloat(vals[ci.price]);
+          const amount=Math.abs(parseFloat(vals[ci.amount]));
+          if(!date||isNaN(shares)||isNaN(price)||isNaN(amount)){console.log('Valori non validi:',{date,shares,price,amount});return;}
+
+          const exists=(etf.transactions||[]).some(t=>
+            t.date===date && Math.abs(t.shares-shares)<0.000001
+          );
+          if(exists){skipped++;return;}
+
+          if(!etf.transactions) etf.transactions=[];
+          etf.transactions.push({date, shares, priceEur:price});
+          etf.transactions.sort((a,b)=>a.date.localeCompare(b.date));
+          etf.priceEur=price;
+          added++;
+        });
+
+        console.log(`BUY trovati: ${buys}, aggiunti: ${added}, saltati: ${skipped}`);
+
+        if(added>0){
+          save(); renderAll();
+          showToast(`${added} nuove transazioni aggiunte${skipped?' · '+skipped+' già presenti':''}  ✓`,'success');
+        } else {
+          showToast(`BUY trovati: ${buys} · Nuove: ${added} · Già presenti: ${skipped}`,'');
+        }
+      },100);
+    }catch(err){
+      console.error('Errore CSV:',err);
+      showToast('Errore CSV: '+err.message,'error');
+    }
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+
+function exportData(p){
+  const blob=new Blob([JSON.stringify({v:DATA_VER,portfolio:p,data:ST[p],date:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`portfolio_${p}_${new Date().toISOString().slice(0,10)}.json`;a.click();
+}
+function importData(event,p){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{const parsed=JSON.parse(e.target.result);ST[p]=parsed.data||parsed;save();renderAll();showToast('Dati importati ✓','success');}
+    catch(e){showToast('Errore JSON','error');}
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ══ TOAST ════════════════════════════════════════════════════════════════════
+let toastT;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ══ FIREBASE ══════════════════════════════════════════════════════════════════
+const FB_SECRET = "pfSecret2024!";
+let db, docRef;
+
+function initFirebase(){
+  try{
+    db = firebase.firestore();
+    docRef = db.collection('portfolio').doc('fabiano');
+    console.log('Firebase OK');
+  }catch(e){ console.warn('Firebase non disponibile:', e); }
+}
+
+let syncTimeout = null;
+
+async function loadFromFirebase(){
+  if(!docRef) return false;
+  try{
+    const doc = await docRef.get();
+    if(doc.exists){
+      const data = doc.data();
+      if(data.personale) ST.personale = data.personale;
+      if(data.figli) ST.figli = data.figli;
+      localStorage.setItem('pfData', JSON.stringify(ST)); // salva locale senza triggare Firebase
+      return true;
+    }
+  }catch(e){ console.warn('Firebase load error:', e); }
+  return false;
+}
+
+function saveToFirebase(){
+  if(!docRef) return;
+  if(syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async ()=>{
+    try{
+      await docRef.set({
+        secret: FB_SECRET,
+        personale: ST.personale,
+        figli: ST.figli,
+        updatedAt: new Date().toISOString(),
+      });
+    }catch(e){ console.warn('Firebase save error:', e); }
+  }, 2000);
+}
+
+// ══ INIT ═════════════════════════════════════════════════════════════════════
+function initApp(){
+  initFirebase();
+  document.getElementById('p-imp').addEventListener('change', e=>importData(e,'personale'));
+  document.getElementById('f-imp').addEventListener('change', e=>importData(e,'figli'));
+  document.getElementById('p-csv-imp').addEventListener('change', e=>importCSV(e,'personale'));
+  document.getElementById('f-csv-imp').addEventListener('change', e=>importCSV(e,'figli'));
+  setTimeout(()=>switchTab('personale'),50);
+  renderAll();
+  refreshBTC();
+  loadFromFirebase().then(loaded=>{
+    if(loaded){ renderAll(); showToast('Dati sincronizzati ✓','success'); }
+  });
+}
+checkAuth();
+</script>
+</body>
+</html>
