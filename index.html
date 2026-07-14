@@ -23,6 +23,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .login-input:focus{border-color:var(--blue)}
 .login-btn{width:100%;max-width:320px;margin-top:12px;background:var(--blue);color:white;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:600;cursor:pointer}
 .login-btn:active{opacity:.85}
+.login-btn:disabled{opacity:.6;cursor:not-allowed}
 .login-err{color:var(--red);font-size:13px;margin-top:10px;min-height:20px;text-align:center}
 
 /* TOP BAR */
@@ -191,10 +192,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <div class="login-screen" id="loginScreen">
   <div class="login-logo">📊</div>
   <div class="login-title">Portfolio Dashboard</div>
-  <div class="login-sub">Inserisci la password per accedere</div>
-  <input class="login-input" type="password" id="loginPwd" placeholder="Password"
-    onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password">
-  <button class="login-btn" onclick="doLogin()">Accedi</button>
+  <div class="login-sub">Accedi con il tuo account Google per continuare</div>
+  <button class="login-btn" id="googleLoginBtn" onclick="signInWithGoogle()" style="display:flex;align-items:center;justify-content:center;gap:10px;background:white;color:#333;border:1px solid #ddd;margin-top:8px">
+    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Accedi con Google
+  </button>
   <div class="login-err" id="loginErr"></div>
 </div>
 
@@ -332,24 +334,24 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <div class="toast" id="toast"></div>
 
 <script>
-// ══ PASSWORD ═════════════════════════════════════════════════════════════════
-const PWD_HASH='07c7250d54e5df014321dd2c8d2d13369e1c625b3577e43315633789ec420ded';
-async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
-async function doLogin(){
-  const p=document.getElementById('loginPwd').value;
-  if(!p){document.getElementById('loginErr').textContent='Inserisci la password';return;}
-  if(await sha256(p)===PWD_HASH){
-    sessionStorage.setItem('pfAuth','1');
-    document.getElementById('loginScreen').classList.add('hidden');
-    initApp();
-  } else {
-    document.getElementById('loginErr').textContent='Password errata';
-    document.getElementById('loginPwd').value='';
-    document.getElementById('loginPwd').focus();
-  }
+// ══ AUTENTICAZIONE GOOGLE ═════════════════════════════════════════════════════
+let appStarted = false;
+
+function signInWithGoogle(){
+  const btn=document.getElementById('googleLoginBtn');
+  btn.disabled=true;
+  btn.textContent='Accesso in corso…';
+  const provider=new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider).catch(e=>{
+    document.getElementById('loginErr').textContent='Errore accesso: '+e.message;
+    btn.disabled=false;
+    btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Accedi con Google`;
+  });
 }
+
 function checkAuth(){
-  if(sessionStorage.getItem('pfAuth')==='1'){document.getElementById('loginScreen').classList.add('hidden');initApp();}
+  // Con Firebase Auth non serve più sessionStorage — onAuthStateChanged gestisce tutto
+  // Mostra login screen finché Firebase non è pronto
 }
 
 // ══ DATI DEFAULT ══════════════════════════════════════════════════════════════
@@ -1214,29 +1216,38 @@ function saveToFirebase(){
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
 function onFirebaseLoaded(){
-  const check=setInterval(()=>{
-    if(typeof firebase!=='undefined'&&typeof firebase.firestore==='function'){
-      clearInterval(check);
-      try{
-        firebase.initializeApp({
-          apiKey:"AIzaSyAjazqGgUySYor31d0veKZ98vAGkCD-EH0",
-          authDomain:"portfolio-dashboard-78ed8.firebaseapp.com",
-          projectId:"portfolio-dashboard-78ed8",
-          storageBucket:"portfolio-dashboard-78ed8.firebasestorage.app",
-          messagingSenderId:"532868919044",
-          appId:"1:532868919044:web:bfcf5b27bd39131afcaa51"
-        });
-        db=firebase.firestore();
-        docRef=db.collection('portfolio').doc('fabiano');
-        console.log('Firebase OK');
-        if(sessionStorage.getItem('pfAuth')==='1'){
-          loadFromFirebase().then(loaded=>{
-            if(loaded){renderAll();showToast('Dati sincronizzati ✓','success');}
-          });
+  try{
+    firebase.initializeApp({
+      apiKey:"AIzaSyAjazqGgUySYor31d0veKZ98vAGkCD-EH0",
+      authDomain:"portfolio-dashboard-78ed8.firebaseapp.com",
+      projectId:"portfolio-dashboard-78ed8",
+      storageBucket:"portfolio-dashboard-78ed8.firebasestorage.app",
+      messagingSenderId:"532868919044",
+      appId:"1:532868919044:web:bfcf5b27bd39131afcaa51"
+    });
+    db=firebase.firestore();
+    docRef=db.collection('portfolio').doc('fabiano');
+    console.log('Firebase OK');
+
+    // Osserva lo stato di autenticazione
+    firebase.auth().onAuthStateChanged(user=>{
+      if(user){
+        // Utente autenticato — nascondi login e avvia app
+        document.getElementById('loginScreen').classList.add('hidden');
+        sessionStorage.setItem('pfAuth','1');
+        if(!appStarted){
+          appStarted=true;
+          initApp();
         }
-      }catch(e){console.warn('Firebase init error:',e);}
-    }
-  },100);
+        loadFromFirebase().then(loaded=>{
+          if(loaded){renderAll();showToast('Dati sincronizzati ✓','success');}
+        });
+      } else {
+        // Non autenticato — mostra schermata login
+        document.getElementById('loginScreen').classList.remove('hidden');
+      }
+    });
+  }catch(e){console.warn('Firebase init error:',e);}
 }
 
 function initApp(){
@@ -1251,7 +1262,8 @@ function initApp(){
 
 checkAuth();
 </script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onload="onFirebaseLoaded()"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" onload="onFirebaseLoaded()"></script>
 </body>
 </html>
