@@ -4,18 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Portfolio</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script>
-firebase.initializeApp({
-  apiKey: "AIzaSyAjazqGgUySYor31d0veKZ98vAGkCD-EH0",
-  authDomain: "portfolio-dashboard-78ed8.firebaseapp.com",
-  projectId: "portfolio-dashboard-78ed8",
-  storageBucket: "portfolio-dashboard-78ed8.firebasestorage.app",
-  messagingSenderId: "532868919044",
-  appId: "1:532868919044:web:bfcf5b27bd39131afcaa51"
-});
-</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -501,7 +489,7 @@ const INIT_TX = {
   ],
 };
 
-const DATA_VER = 'v12';
+const DATA_VER = 'v13';
 let ST = (()=>{
   try {
     if(localStorage.getItem('pfVer')!==DATA_VER){
@@ -707,7 +695,7 @@ function savePrice(id){
   const etf=findETF(id);
   if(!etf)return;
   etf.priceEur=val;
-  // Sincronizza il prezzo su tutti gli ETF con lo stesso ticker
+  // Sincronizza il prezzo su tutti gli ETF con lo stesso ticker (escludi ticker diversi)
   const allEtfs=[...ST.personale.etfs,...ST.figli.etfs];
   let synced=0;
   allEtfs.forEach(e=>{
@@ -1208,9 +1196,11 @@ async function loadFromFirebase(){
     const doc = await docRef.get();
     if(doc.exists){
       const data = doc.data();
+      // Se i dati Firebase hanno versione vecchia, ignora e usa i default freschi
+      if(data.dataVer && data.dataVer !== DATA_VER) return false;
       if(data.personale) ST.personale = data.personale;
       if(data.figli) ST.figli = data.figli;
-      localStorage.setItem('pfData', JSON.stringify(ST)); // salva locale senza triggare Firebase
+      localStorage.setItem('pfData', JSON.stringify(ST));
       return true;
     }
   }catch(e){ console.warn('Firebase load error:', e); }
@@ -1224,6 +1214,7 @@ function saveToFirebase(){
     try{
       await docRef.set({
         secret: FB_SECRET,
+        dataVer: DATA_VER,
         personale: ST.personale,
         figli: ST.figli,
         updatedAt: new Date().toISOString(),
@@ -1242,11 +1233,35 @@ function initApp(){
   setTimeout(()=>switchTab('personale'),50);
   renderAll();
   refreshBTC();
-  loadFromFirebase().then(loaded=>{
-    if(loaded){ renderAll(); showToast('Dati sincronizzati ✓','success'); }
-  });
 }
 checkAuth();
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onload="onFirebaseLoaded()"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+function onFirebaseLoaded(){
+  // Aspetta che anche firestore sia caricato
+  const check=setInterval(()=>{
+    if(typeof firebase !== 'undefined' && firebase.firestore){
+      clearInterval(check);
+      firebase.initializeApp({
+        apiKey: "AIzaSyAjazqGgUySYor31d0veKZ98vAGkCD-EH0",
+        authDomain: "portfolio-dashboard-78ed8.firebaseapp.com",
+        projectId: "portfolio-dashboard-78ed8",
+        storageBucket: "portfolio-dashboard-78ed8.firebasestorage.app",
+        messagingSenderId: "532868919044",
+        appId: "1:532868919044:web:bfcf5b27bd39131afcaa51"
+      });
+      initFirebase();
+      // Se l'app è già autenticata, carica dati da Firebase
+      if(sessionStorage.getItem('pfAuth')==='1'){
+        loadFromFirebase().then(loaded=>{
+          if(loaded){ renderAll(); showToast('Dati sincronizzati ✓','success'); }
+        });
+      }
+    }
+  },100);
+}
 </script>
 </body>
 </html>
