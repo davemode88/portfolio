@@ -340,13 +340,22 @@ let appStarted = false;
 function signInWithGoogle(){
   const btn=document.getElementById('googleLoginBtn');
   btn.disabled=true;
-  btn.textContent='Reindirizzamento…';
+  btn.textContent='Accesso in corso…';
   const provider=new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithRedirect(provider).catch(e=>{
-    document.getElementById('loginErr').textContent='Errore: '+e.message;
-    btn.disabled=false;
-    btn.textContent='Accedi con Google';
-  });
+  firebase.auth().signInWithPopup(provider)
+    .then(result=>{
+      console.log('Login OK:', result.user.email);
+    })
+    .catch(e=>{
+      // Se il popup è bloccato, prova con redirect
+      if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'){
+        firebase.auth().signInWithRedirect(provider);
+      } else {
+        document.getElementById('loginErr').textContent='Errore: '+e.message;
+        btn.disabled=false;
+        btn.textContent='Accedi con Google';
+      }
+    });
 }
 
 function checkAuth(){
