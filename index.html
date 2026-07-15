@@ -7,114 +7,101 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--border:#1e293b;
-  --green:#10b981;--red:#ef4444;--blue:#3b82f6;--gold:#f59e0b;
-  --purple:#8b5cf6;--text:#f1f5f9;--muted:#94a3b8;--tab-h:64px;
+  --bg:#080c14;--s1:#0f1623;--s2:#151e2e;--s3:#1c2840;--border:#1f2d45;
+  --green:#00c97a;--red:#ff4d6a;--blue:#4d8eff;--gold:#f5a623;
+  --purple:#a78bfa;--text:#eef2f8;--muted:#6b7f9e;--tab-h:62px;
 }
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;min-height:100dvh;-webkit-font-smoothing:antialiased}
-
-/* LOGIN */
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100dvh;-webkit-font-smoothing:antialiased}
 .login-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px}
 .login-screen.hidden{display:none}
 .login-logo{font-size:48px;margin-bottom:24px}
 .login-title{font-size:22px;font-weight:700;margin-bottom:6px;text-align:center}
 .login-sub{font-size:13px;color:var(--muted);margin-bottom:32px;text-align:center}
-.login-input{width:100%;max-width:320px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px 16px;font-size:16px;text-align:center;outline:none}
-.login-input:focus{border-color:var(--blue)}
-.login-btn{width:100%;max-width:320px;margin-top:12px;background:var(--blue);color:white;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:600;cursor:pointer}
+.login-btn{width:100%;max-width:320px;margin-top:12px;background:white;color:#333;border:1px solid #ddd;border-radius:12px;padding:14px;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
 .login-btn:active{opacity:.85}
 .login-btn:disabled{opacity:.6;cursor:not-allowed}
 .login-err{color:var(--red);font-size:13px;margin-top:10px;min-height:20px;text-align:center}
-
-/* TOP BAR */
-.top-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px 12px;position:sticky;top:0;z-index:100}
+.top-bar{background:linear-gradient(180deg,var(--s2) 0%,var(--s1) 100%);border-bottom:1px solid var(--border);padding:16px 16px 12px;position:sticky;top:0;z-index:100}
 .top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-.port-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px}
-.port-total{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
-.top-gains{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
-.port-gain{font-size:12px;font-weight:600;padding:3px 9px;border-radius:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.port-gain.pos{background:rgba(16,185,129,.15);color:var(--green)}
-.port-gain.neg{background:rgba(239,68,68,.15);color:var(--red)}
-.port-gain.neu{background:rgba(148,163,184,.1);color:var(--muted)}
-.live-row{display:flex;align-items:center;gap:8px;margin-top:8px}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+.port-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px}
+.port-total{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px;line-height:1}
+.top-gains{display:flex;flex-direction:column;align-items:flex-end;gap:4px;padding-top:4px}
+.port-gain{font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em}
+.port-gain.pos{background:rgba(0,201,122,.15);color:var(--green)}
+.port-gain.neg{background:rgba(255,77,106,.15);color:var(--red)}
+.port-gain.neu{background:rgba(107,127,158,.1);color:var(--muted)}
+.live-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 2s ease-in-out infinite}
 .dot.loading{background:var(--gold);animation:pulse .5s ease-in-out infinite}
 .dot.error{background:var(--red);animation:none}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 .live-lbl{font-size:11px;color:var(--muted)}
-.refresh-btn{margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.refresh-btn{margin-left:auto;background:var(--s3);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
 .refresh-btn:active{background:var(--border)}
 .spin{animation:spin .8s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* TABS */
-.tab-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;height:var(--tab-h);z-index:200;padding-bottom:env(safe-area-inset-bottom)}
-.tab-btn{flex:1;background:none;border:none;color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:color .15s}
+.tab-nav{position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-top:1px solid var(--border);display:flex;height:var(--tab-h);z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.tab-btn{flex:1;background:none;border:none;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:color .15s}
 .tab-btn.active{color:var(--blue)}
 .tab-icon{font-size:20px}
 .tab-ind{position:absolute;top:0;height:2px;background:var(--blue);transition:left .2s ease,width .2s ease;border-radius:0 0 2px 2px}
-
-/* LAYOUT */
-.app{padding-bottom:calc(var(--tab-h) + 16px)}
-.view{display:none;padding:12px 16px}
+.app{padding-bottom:calc(var(--tab-h)+16px)}
+.view{display:none}
 .view.active{display:block}
-.sec-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
-.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
-.sec-title:first-child{margin-top:6px}
-
-/* SUMMARY */
-.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.sum-item{background:var(--surface2);border-radius:10px;padding:12px}
-.sum-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
-.sum-val{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
-
-/* ASSET CARD */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden}
-.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);gap:8px}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:14px 16px 0}
+.sum-item{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.sum-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px}
+.sum-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.sum-sub{font-size:11px;font-variant-numeric:tabular-nums;margin-top:2px}
+.sec{padding:14px 16px 0}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600}
+.sec-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(77,142,255,.15);color:var(--blue)}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:8px}
+.card-hdr{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
 .card-title{font-size:13px;font-weight:600}
 .card-sub{font-size:11px;color:var(--muted);margin-top:1px}
-.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
-.badge-etf{background:rgba(59,130,246,.15);color:var(--blue)}
-.badge-crypto{background:rgba(139,92,246,.15);color:var(--purple)}
-.badge-gold{background:rgba(245,158,11,.15);color:var(--gold)}
-
-/* ETF BLOCK */
-.etf-block{padding:12px 16px;border-bottom:1px solid var(--border)}
-.etf-block:last-child{border-bottom:none}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0}
+.badge-etf{background:rgba(77,142,255,.15);color:var(--blue)}
+.badge-crypto{background:rgba(167,139,250,.15);color:var(--purple)}
+.badge-gold{background:rgba(245,166,35,.15);color:var(--gold)}
+.etf-block{padding:12px 14px;border-bottom:1px solid var(--border)}
+.etf-block:last-child{border-bottom:none;padding-bottom:14px}
 .etf-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .etf-left{min-width:0;flex:1}
 .etf-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.etf-detail{font-size:11px;color:var(--muted);margin-top:2px}
+.etf-ticker{font-size:10px;color:var(--muted);margin-top:2px;font-weight:500;letter-spacing:.05em}
 .etf-right{text-align:right;flex-shrink:0}
-.etf-val{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
-.etf-gain{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:1px}
-.etf-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:10px}
-.meta-item{display:flex;flex-direction:column;gap:1px}
-.meta-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.etf-val{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.etf-gain{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+.etf-meta{display:flex;gap:0;padding:10px 0 0;border-top:1px solid var(--border);margin-top:10px}
+.meta-item{flex:1;display:flex;flex-direction:column;gap:2px}
+.meta-item+.meta-item{border-left:1px solid var(--border);padding-left:10px}
+.meta-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .meta-val{font-size:12px;font-weight:500;font-variant-numeric:tabular-nums}
 .alloc-wrap{margin-top:10px}
-.alloc-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px}
-.alloc-bg{background:var(--border);border-radius:3px;height:5px;overflow:hidden;position:relative}
-.alloc-fill{height:5px;border-radius:3px;transition:width .4s ease}
-.alloc-target{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.5);border-radius:1px}
+.alloc-hdr{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:5px}
+.alloc-hdr b{color:var(--text);font-weight:600}
+.alloc-track{height:8px;background:var(--s3);border-radius:4px;overflow:hidden;position:relative}
+.alloc-fill{height:100%;border-radius:4px;transition:width .4s ease}
+.alloc-target{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.35);border-radius:1px}
+.tx-last{display:flex;align-items:center;gap:8px;margin-top:10px;padding:7px 10px;background:var(--s2);border-radius:8px}
+.tx-date{font-size:10px;color:var(--muted);flex-shrink:0}
+.tx-detail{font-size:11px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-amount{font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted);flex-shrink:0}
 .etf-actions{display:flex;gap:6px;margin-top:10px}
-.btn-sm{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;text-align:center}
+.btn-sm{flex:1;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;text-align:center}
 .btn-sm:active{background:var(--border)}
-.btn-sm.primary{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3);color:var(--blue)}
-
-/* PRICE EDIT INLINE */
-.price-edit{display:none;background:var(--surface2);border-top:1px solid var(--border);padding:12px 16px}
+.btn-sm.primary{background:rgba(77,142,255,.12);border-color:rgba(77,142,255,.3);color:var(--blue)}
+.price-edit{display:none;background:var(--s2);border-top:1px solid var(--border);padding:12px 14px}
 .price-edit.open{display:block}
 .price-edit-row{display:flex;gap:8px;align-items:center}
 .price-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:14px;font-variant-numeric:tabular-nums;outline:none}
 .price-input:focus{border-color:var(--blue)}
 .confirm-btn{background:var(--blue);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
-.confirm-btn:active{opacity:.85}
-
-/* TRANSACTION PANEL */
-.tx-panel{display:none;background:var(--surface2);border-top:1px solid var(--border);padding:14px 16px}
+.tx-panel{display:none;background:var(--s2);border-top:1px solid var(--border);padding:14px}
 .tx-panel.open{display:block}
-.tx-panel-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.tx-panel-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 .tx-field{margin-bottom:10px}
 .tx-label{font-size:11px;color:var(--muted);margin-bottom:4px}
 .tx-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;font-variant-numeric:tabular-nums;outline:none}
@@ -122,10 +109,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .tx-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .tx-btns{display:flex;gap:8px}
 .tx-add-btn{flex:1;background:var(--green);color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer}
-.tx-add-btn:active{opacity:.85}
-.tx-cancel-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer}
-
-/* TRANSACTION LIST */
+.tx-cancel-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer}
 .tx-list{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}
 .tx-list-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
 .tx-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
@@ -134,50 +118,41 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .tx-item-right{text-align:right;font-variant-numeric:tabular-nums}
 .tx-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:2px 6px;opacity:.6}
 .tx-del:active{opacity:1}
-
-/* CARD TOTAL */
-.card-total{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface2)}
+.card-total{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-top:1px solid var(--border);background:var(--s2)}
 .card-total-lbl{color:var(--muted);font-size:12px}
 .card-total-val{font-weight:700;font-variant-numeric:tabular-nums;font-size:15px;text-align:right}
 .card-total-sub{font-size:11px;font-variant-numeric:tabular-nums}
-
-/* BTC BLOCK */
-.btc-block{padding:12px 16px;border-bottom:1px solid var(--border)}
-.btc-block:last-child{border-bottom:none}
-.btc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.btc-name{font-size:13px;font-weight:600}
-.btc-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.btc-val{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
-.btc-gain{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:1px;text-align:right}
-
-/* REBALANCE */
-.rebal-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px}
-.rebal-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}
-.rebal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.rebal-table{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
-.rebal-table th{padding:8px 10px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--surface2);white-space:nowrap}
-.rebal-table th:first-child{text-align:left}
-.rebal-table td{padding:10px 10px;text-align:right;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:middle}
-.rebal-table td:first-child{text-align:left;font-weight:500}
-.rebal-table tr:last-child td{border-bottom:none}
+.rebal-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:8px}
+.rebal-hdr{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rebal-title{font-size:13px;font-weight:600}
+.rebal-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px}
+.rebal-badge.warn{background:rgba(245,166,35,.15);color:var(--gold)}
+.rebal-badge.ok{background:rgba(0,201,122,.15);color:var(--green)}
+.rebal-item{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.rebal-item:last-child{border-bottom:none}
+.rebal-ticker{font-size:12px;font-weight:700;width:54px;flex-shrink:0}
+.rebal-bars{flex:1;min-width:0}
+.rebal-pcts{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px}
+.rebal-pcts b{color:var(--text)}
+.rebal-track{height:6px;background:var(--s3);border-radius:3px;position:relative;overflow:hidden}
+.rebal-actual{height:100%;border-radius:3px}
+.rebal-tgt-line{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.4)}
+.rebal-action{flex-shrink:0;text-align:right;min-width:68px}
+.rebal-eur{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.rebal-shares{font-size:10px;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
 .act-buy{color:var(--green);font-weight:700}
 .act-sell{color:var(--red);font-weight:700}
 .act-ok{color:var(--muted)}
-.drift-warn{color:var(--gold);font-weight:600}
-
-/* UTILS */
 .pos{color:var(--green)}.neg{color:var(--red)}.neu{color:var(--muted)}
-.toast{position:fixed;bottom:calc(var(--tab-h)+12px);left:16px;right:16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:13px;font-weight:500;transform:translateY(20px);opacity:0;transition:all .25s ease;z-index:300;text-align:center}
+.toast{position:fixed;bottom:calc(var(--tab-h)+12px);left:16px;right:16px;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:13px;font-weight:500;transform:translateY(20px);opacity:0;transition:all .25s ease;z-index:300;text-align:center}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{border-color:var(--green);color:var(--green)}
 .toast.error{border-color:var(--red);color:var(--red)}
-
-/* BACKUP */
-.data-actions{display:flex;gap:8px;margin-bottom:10px}
-.data-btn{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;text-align:center}
+.data-actions{display:flex;gap:8px;margin-bottom:8px}
+.data-btn{flex:1;background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;text-align:center}
 .data-btn:active{background:var(--border)}
 .file-input{display:none}
-
+.pb16{padding-bottom:16px}
 @media(min-width:600px){
   body{max-width:480px;margin:0 auto}
   .tab-nav{max-width:480px;left:50%;transform:translateX(-50%)}
@@ -223,96 +198,112 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <!-- ══ PERSONALE ══ -->
 <div class="view active" id="view-personale">
 
-  <div class="sec-title">Riepilogo</div>
   <div class="sum-grid">
-    <div class="sum-item"><div class="sum-lbl">Valore ETF</div><div class="sum-val" id="p-etf-tot">—</div></div>
-    <div class="sum-item"><div class="sum-lbl">Valore BTC</div><div class="sum-val" id="p-btc-tot">—</div></div>
-    <div class="sum-item"><div class="sum-lbl">Totale Investito</div><div class="sum-val" id="p-carico">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">ETF</div><div class="sum-val" id="p-etf-tot">—</div><div class="sum-sub" id="p-etf-sub">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Bitcoin</div><div class="sum-val" id="p-btc-tot">—</div><div class="sum-sub" id="p-btc-sub">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Investito</div><div class="sum-val" id="p-carico">—</div></div>
     <div class="sum-item"><div class="sum-lbl">Gain / Loss</div><div class="sum-val" id="p-gain">—</div></div>
   </div>
 
-  <div class="sec-title">ETF — Trade Republic</div>
-  <div class="card" id="p-etf-card"><!-- dynamic --></div>
-
-  <div class="sec-title">Bitcoin</div>
-  <div class="card">
-    <div class="card-hdr">
-      <div><div class="card-title">Bitcoin</div><div class="card-sub" id="btc-price-lbl">Prezzo live: —</div></div>
-      <span class="badge badge-crypto">BTC</span>
+  <div class="sec" style="margin-top:6px">
+    <div class="sec-hdr">
+      <span class="sec-title">ETF — Trade Republic</span>
+      <span class="sec-badge">5 strumenti</span>
     </div>
-    <div id="p-btc-blocks"><!-- dynamic --></div>
-    <div class="card-total">
-      <span class="card-total-lbl">Totale BTC</span>
-      <div class="card-total-val" id="p-btc-sum">—<div class="card-total-sub" id="p-btc-gain-sum"></div></div>
+    <div class="card" id="p-etf-card"><!-- dynamic --></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hdr">
+      <span class="sec-title">Bitcoin</span>
+      <span class="badge badge-crypto" id="btc-price-lbl">BTC</span>
+    </div>
+    <div class="card">
+      <div id="p-btc-blocks"><!-- dynamic --></div>
+      <div class="card-total">
+        <span class="card-total-lbl">Totale BTC</span>
+        <div class="card-total-val" id="p-btc-sum">—<div class="card-total-sub" id="p-btc-gain-sum"></div></div>
+      </div>
     </div>
   </div>
 
-  <div class="sec-title">Ribilanciamento ETF</div>
-  <div class="rebal-card">
-    <div class="rebal-hdr">
-      <div><div class="card-title">Piano Ribilanciamento</div><div class="card-sub">PAC €200 · post-contributo</div></div>
-      <div class="badge" id="p-rebal-badge">—</div>
+  <div class="sec">
+    <div class="sec-hdr">
+      <span class="sec-title">Ribilanciamento ETF</span>
     </div>
-    <div class="rebal-scroll"><table class="rebal-table">
-      <thead><tr><th>ETF</th><th>Target</th><th>Attuale</th><th>Drift</th><th>Importo</th><th>Quote</th><th>Azione</th></tr></thead>
-      <tbody id="p-rebal-body"></tbody>
-    </table></div>
+    <div class="rebal-card">
+      <div class="rebal-hdr">
+        <div><div class="rebal-title">Piano · PAC €200</div></div>
+        <div class="rebal-badge" id="p-rebal-badge">—</div>
+      </div>
+      <div id="p-rebal-body"><!-- dynamic --></div>
+    </div>
   </div>
 
-  <div class="sec-title">Backup</div>
-  <div class="data-actions">
-    <button class="data-btn" onclick="exportData('personale')">⬇ Esporta JSON</button>
-    <button class="data-btn" onclick="document.getElementById('p-imp').click()">⬆ Importa JSON</button>
-    <input type="file" accept=".json" class="file-input" id="p-imp">
-  </div>
-  <div class="data-actions">
-    <button class="data-btn" style="background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:var(--green)" onclick="document.getElementById('p-csv-imp').click()">📥 Importa CSV Trade Republic</button>
+  <div class="sec pb16">
+    <div class="sec-hdr"><span class="sec-title">Backup & Import</span></div>
+    <div class="data-actions">
+      <button class="data-btn" onclick="exportData('personale')">⬇ JSON</button>
+      <button class="data-btn" onclick="document.getElementById('p-imp').click()">⬆ JSON</button>
+      <input type="file" accept=".json" class="file-input" id="p-imp">
+    </div>
+    <div class="data-actions">
+      <button class="data-btn" style="background:rgba(0,201,122,.1);border-color:rgba(0,201,122,.3);color:var(--green)" onclick="document.getElementById('p-csv-imp').click()">📥 Importa CSV Trade Republic</button>
+    </div>
   </div>
 </div>
 
 <!-- ══ FIGLI ══ -->
 <div class="view" id="view-figli">
 
-  <div class="sec-title">Riepilogo</div>
   <div class="sum-grid">
-    <div class="sum-item"><div class="sum-lbl">Valore ETF</div><div class="sum-val" id="f-etf-tot">—</div></div>
-    <div class="sum-item"><div class="sum-lbl">Oro Fisico</div><div class="sum-val" id="f-gold-tot">—</div></div>
-    <div class="sum-item"><div class="sum-lbl">Totale Investito</div><div class="sum-val" id="f-carico">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">ETF</div><div class="sum-val" id="f-etf-tot">—</div><div class="sum-sub" id="f-etf-sub">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Oro Fisico</div><div class="sum-val" id="f-gold-tot">—</div><div class="sum-sub" id="f-gold-sub">—</div></div>
+    <div class="sum-item"><div class="sum-lbl">Investito</div><div class="sum-val" id="f-carico">—</div></div>
     <div class="sum-item"><div class="sum-lbl">Gain / Loss</div><div class="sum-val" id="f-gain">—</div></div>
   </div>
 
-  <div class="sec-title">ETF — Trade Republic</div>
-  <div class="card" id="f-etf-card"><!-- dynamic --></div>
-
-  <div class="sec-title">Oro Fisico</div>
-  <div class="card">
-    <div class="card-hdr">
-      <div><div class="card-title">Oro Fisico</div><div class="card-sub" id="gold-price-lbl">Prezzo: —</div></div>
-      <span class="badge badge-gold">XAU</span>
+  <div class="sec" style="margin-top:6px">
+    <div class="sec-hdr">
+      <span class="sec-title">ETF — Trade Republic</span>
+      <span class="sec-badge">4 strumenti</span>
     </div>
-    <div id="f-gold-block"><!-- dynamic --></div>
+    <div class="card" id="f-etf-card"><!-- dynamic --></div>
   </div>
 
-  <div class="sec-title">Ribilanciamento ETF</div>
-  <div class="rebal-card">
-    <div class="rebal-hdr">
-      <div><div class="card-title">Piano Ribilanciamento</div><div class="card-sub">PAC €250 · post-contributo</div></div>
-      <div class="badge" id="f-rebal-badge">—</div>
+  <div class="sec">
+    <div class="sec-hdr">
+      <span class="sec-title">Oro Fisico</span>
+      <span class="badge badge-gold" id="gold-price-lbl">XAU</span>
     </div>
-    <div class="rebal-scroll"><table class="rebal-table">
-      <thead><tr><th>ETF</th><th>Target</th><th>Attuale</th><th>Drift</th><th>Importo</th><th>Quote</th><th>Azione</th></tr></thead>
-      <tbody id="f-rebal-body"></tbody>
-    </table></div>
+    <div class="card">
+      <div id="f-gold-block"><!-- dynamic --></div>
+    </div>
   </div>
 
-  <div class="sec-title">Backup</div>
-  <div class="data-actions">
-    <button class="data-btn" onclick="exportData('figli')">⬇ Esporta JSON</button>
-    <button class="data-btn" onclick="document.getElementById('f-imp').click()">⬆ Importa JSON</button>
-    <input type="file" accept=".json" class="file-input" id="f-imp">
+  <div class="sec">
+    <div class="sec-hdr">
+      <span class="sec-title">Ribilanciamento ETF</span>
+    </div>
+    <div class="rebal-card">
+      <div class="rebal-hdr">
+        <div><div class="rebal-title">Piano · PAC €250</div></div>
+        <div class="rebal-badge" id="f-rebal-badge">—</div>
+      </div>
+      <div id="f-rebal-body"><!-- dynamic --></div>
+    </div>
   </div>
-  <div class="data-actions">
-    <button class="data-btn" style="background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:var(--green)" onclick="document.getElementById('f-csv-imp').click()">📥 Importa CSV Trade Republic</button>
+
+  <div class="sec pb16">
+    <div class="sec-hdr"><span class="sec-title">Backup & Import</span></div>
+    <div class="data-actions">
+      <button class="data-btn" onclick="exportData('figli')">⬇ JSON</button>
+      <button class="data-btn" onclick="document.getElementById('f-imp').click()">⬆ JSON</button>
+      <input type="file" accept=".json" class="file-input" id="f-imp">
+    </div>
+    <div class="data-actions">
+      <button class="data-btn" style="background:rgba(0,201,122,.1);border-color:rgba(0,201,122,.3);color:var(--green)" onclick="document.getElementById('f-csv-imp').click()">📥 Importa CSV Trade Republic</button>
+    </div>
   </div>
 </div>
 
@@ -583,9 +574,7 @@ function setLive(s,label){
 // ══ RENDER ETF CARD ══════════════════════════════════════════════════════════
 function renderETFCard(portfolio, containerId){
   const s=ST[portfolio];
-  const pac=s.pac;
-  let html='<div class="card-hdr"><div><div class="card-title">ETF '+(portfolio==='personale'?'Personali':'Figli')+'</div><div class="card-sub">PAC mensile €'+pac+' · '+s.etfs.length+' strumenti</div></div><span class="badge badge-etf">Trade Republic</span></div>';
-
+  let html='';
   let totalVal=0, totalCarico=0;
   const calcs=s.etfs.map(e=>{const c=etfCalc(e);if(c.value)totalVal+=c.value;else totalVal+=c.carico;totalCarico+=c.carico;return{etf:e,c};});
 
@@ -597,11 +586,21 @@ function renderETFCard(portfolio, containerId){
     const targetW=Math.min(100,etf.target*100);
     const barColor=c.gain!==null?(c.gain>=0?'var(--green)':'var(--red)'):'var(--muted)';
 
+    // Ultima transazione
+    const tx=etf.transactions||[];
+    const sorted=[...tx].sort((a,b)=>b.date.localeCompare(a.date));
+    const last=sorted[0];
+    const txHtml=last?`<div class="tx-last">
+      <div class="tx-date">${last.date}</div>
+      <div class="tx-detail">${FI4.format(last.shares)} quote · €${f2(last.priceEur)}</div>
+      <div class="tx-amount">${fE(last.shares*last.priceEur)}</div>
+    </div>`:'';
+
     html+=`<div class="etf-block" id="block-${etf.id}">
       <div class="etf-top">
         <div class="etf-left">
           <div class="etf-name">${etf.name}</div>
-          <div class="etf-detail">${FI4.format(c.shares)} quote${hasPrice?' · €'+f2(c.price):'  · prezzo non inserito'}</div>
+          <div class="etf-ticker">${etf.ticker} · ${FI4.format(c.shares)} quote</div>
         </div>
         <div class="etf-right">
           <div class="etf-val">${fE(dispVal)}${!hasPrice?'<span style="color:var(--muted);font-size:10px"> *</span>':''}</div>
@@ -610,14 +609,14 @@ function renderETFCard(portfolio, containerId){
       </div>
       <div class="etf-meta">
         <div class="meta-item"><div class="meta-lbl">Prezzo medio</div><div class="meta-val">${fE(c.avgPrice)}</div></div>
-        <div class="meta-item"><div class="meta-lbl">Prezzo attuale</div><div class="meta-val ${hasPrice?'':'neu'}">${hasPrice?fE(c.price):'—'}</div></div>
+        <div class="meta-item"><div class="meta-lbl">Prezzo live</div><div class="meta-val ${hasPrice?'':'neu'}">${hasPrice?fE(c.price):'—'}</div></div>
         <div class="meta-item"><div class="meta-lbl">Investito</div><div class="meta-val">${fE(c.carico)}</div></div>
-        <div class="meta-item"><div class="meta-lbl">Controvalore</div><div class="meta-val">${c.value!==null?fE(c.value):'—'}</div></div>
       </div>
       <div class="alloc-wrap">
-        <div class="alloc-labels"><span>Allocaz.: <b>${fP(allocPct)}</b></span><span>Target: <b>${fP(etf.target)}</b></span></div>
-        <div class="alloc-bg"><div class="alloc-fill" style="width:${barW.toFixed(1)}%;background:${barColor}"></div><div class="alloc-target" style="left:${targetW.toFixed(1)}%"></div></div>
+        <div class="alloc-hdr"><span>Allocaz. <b>${fP(allocPct)}</b></span><span>Target <b>${fP(etf.target)}</b></span></div>
+        <div class="alloc-track"><div class="alloc-fill" style="width:${barW.toFixed(1)}%;background:${barColor}"></div><div class="alloc-target" style="left:${targetW.toFixed(1)}%"></div></div>
       </div>
+      ${txHtml}
       <div class="etf-actions">
         <button class="btn-sm primary" onclick="togglePrice('${etf.id}')">💰 Prezzo</button>
         <button class="btn-sm" onclick="toggleTx('${etf.id}')">+ Transazione</button>
@@ -644,7 +643,6 @@ function renderETFCard(portfolio, containerId){
     </div>`;
   });
 
-  // Card total
   const totalGain=totalVal-totalCarico;
   const totalGainPct=totalCarico>0?totalGain/totalCarico:0;
   html+=`<div class="card-total">
@@ -769,10 +767,7 @@ function renderGold(){
   const gain=val!==null?val-g.caricoEur:null;
   const gainPct=gain!==null?gain/g.caricoEur:null;
 
-  if(price){
-    document.getElementById('gold-price-lbl').textContent=
-      `€${f2(price)}/g · €${f0(price*31.1035)}/oz${isLive?' · live':'· manuale'}`;
-  }
+  if(price) document.getElementById('gold-price-lbl').textContent=`€${f2(price)}/g`;
 
   document.getElementById('f-gold-block').innerHTML=`
     <div class="etf-block">
@@ -866,7 +861,7 @@ function renderBTC(){
   const totGain=totVal-totCarico;
   const totGainPct=totCarico>0?totGain/totCarico:0;
 
-  if(btcEur) document.getElementById('btc-price-lbl').textContent=`Prezzo live: €${f0(btcEur)}/BTC`;
+  if(btcEur) document.getElementById('btc-price-lbl').textContent=`€${f0(btcEur)}/BTC`;
 
   document.getElementById('p-btc-blocks').innerHTML=`
     <div class="etf-block">
@@ -961,9 +956,9 @@ function delBtcTx(wallet,idx){
   showToast('Transazione rimossa','success');
 }
 
-// ══ RIBILANCIAMENTO ══════════════════════════════════════════════════════════
+// ══ RIBILANCIAMENTO VERTICALE ════════════════════════════════════════════════
 function renderRebalance(prefix,etfs,etfTotal,pac){
-  const tbody=document.getElementById(prefix+'-rebal-body');
+  const container=document.getElementById(prefix+'-rebal-body');
   const postPac=etfTotal+pac;
   let needsAction=false;
   const totalBuyNeeded=etfs.reduce((s,etf)=>{
@@ -982,50 +977,80 @@ function renderRebalance(prefix,etfs,etfTotal,pac){
     const diff=etf.target*postPac-v;
     let effDiff=diff;
     if(diff>0&&totalBuyNeeded>pac) effDiff=(diff/totalBuyNeeded)*pac;
-    const effShares=price&&effDiff>0?effDiff/price:null;
+    const effShares=price&&Math.abs(effDiff)>0.5?Math.abs(effDiff)/price:null;
     const driftWarn=Math.abs(drift)>etf.drift;
     let act,cls;
     if(Math.abs(effDiff)<0.5){act='✓ OK';cls='act-ok';}
     else if(effDiff>0){act='BUY';cls='act-buy';needsAction=true;}
     else{act='SELL';cls='act-sell';needsAction=true;}
-    html+=`<tr>
-      <td title="${etf.name}">${etf.ticker}</td>
-      <td>${fP(etf.target)}</td>
-      <td class="${driftWarn?'drift-warn':''}">${fP(currAlloc)}</td>
-      <td class="${driftWarn?'drift-warn':''}">${gs(drift)}${fP(drift)}</td>
-      <td class="${cls}">${Math.abs(effDiff)>0.5?(effDiff>0?'+':'-')+fE(Math.abs(effDiff)):'—'}</td>
-      <td class="${cls}">${effShares?'+'+FI4.format(effShares):'—'}</td>
-      <td class="${cls}"><b>${act}</b></td>
-    </tr>`;
+
+    const barW=Math.min(100,currAlloc*100/Math.max(currAlloc,etf.target)*100);
+    const actualPct=currAlloc*100;
+    const targetPct=etf.target*100;
+    const barColor=cls==='act-buy'?'var(--green)':cls==='act-sell'?'var(--red)':'var(--muted)';
+    const fillW=Math.min(100,(actualPct/Math.max(actualPct,targetPct+1))*100);
+
+    html+=`<div class="rebal-item">
+      <div class="rebal-ticker">${etf.ticker}</div>
+      <div class="rebal-bars">
+        <div class="rebal-pcts"><span>${fP(currAlloc)}</span><span>▶ <b>${fP(etf.target)}</b></span></div>
+        <div class="rebal-track">
+          <div class="rebal-actual" style="width:${fillW.toFixed(1)}%;background:${barColor}"></div>
+          <div class="rebal-tgt-line" style="left:${Math.min(99,(targetPct/Math.max(actualPct,targetPct+1))*100).toFixed(1)}%"></div>
+        </div>
+      </div>
+      <div class="rebal-action">
+        <div class="rebal-eur ${cls}">${Math.abs(effDiff)>0.5?(effDiff>0?'+':'-')+fE(Math.abs(effDiff)):act}</div>
+        <div class="rebal-shares">${effShares?(effDiff>0?'+':'-')+FI4.format(effShares)+' q.':'—'}</div>
+      </div>
+    </div>`;
   });
-  tbody.innerHTML=html;
+
+  container.innerHTML=html;
   const badge=document.getElementById(prefix+'-rebal-badge');
-  if(needsAction){badge.textContent='RIBILANCIARE';badge.style.background='rgba(245,158,11,.15)';badge.style.color='var(--gold)';}
-  else{badge.textContent='BILANCIATO';badge.style.background='rgba(16,185,129,.15)';badge.style.color='var(--green)';}
+  if(needsAction){
+    badge.textContent='RIBILANCIARE';
+    badge.className='rebal-badge warn';
+  } else {
+    badge.textContent='BILANCIATO';
+    badge.className='rebal-badge ok';
+  }
 }
 
 // ══ RENDER ALL ════════════════════════════════════════════════════════════════
 function renderAll(){
-  // Personale ETF
   const{totalVal:pEtfVal,totalCarico:pEtfCarico}=renderETFCard('personale','p-etf-card');
   const{totVal:pBtcVal,totCarico:pBtcCarico}=renderBTC();
   const pTot=pEtfVal+pBtcVal, pCar=pEtfCarico+pBtcCarico;
   const pGain=pTot-pCar, pGainPct=pCar>0?pGain/pCar:0;
+  const pEtfGain=pEtfVal-pEtfCarico, pEtfGainPct=pEtfCarico>0?pEtfGain/pEtfCarico:0;
+  const pBtcGain=pBtcVal-pBtcCarico, pBtcGainPct=pBtcCarico>0?pBtcGain/pBtcCarico:0;
+
   document.getElementById('p-etf-tot').textContent=fE(pEtfVal);
+  document.getElementById('p-etf-sub').className='sum-sub '+gc(pEtfGain);
+  document.getElementById('p-etf-sub').textContent=gs(pEtfGain)+fE(pEtfGain)+' '+gs(pEtfGainPct)+fP(pEtfGainPct);
   document.getElementById('p-btc-tot').textContent=fE(pBtcVal);
+  document.getElementById('p-btc-sub').className='sum-sub '+gc(pBtcGain);
+  document.getElementById('p-btc-sub').textContent=gs(pBtcGain)+fE(pBtcGain)+' '+gs(pBtcGainPct)+fP(pBtcGainPct);
   document.getElementById('p-carico').textContent=fE(pCar);
   const pgEl=document.getElementById('p-gain');
   pgEl.className='sum-val '+gc(pGain);
   pgEl.innerHTML=gs(pGain)+fE(pGain)+'<span style="font-size:11px;display:block;font-weight:500">'+gs(pGainPct)+fP(pGainPct)+'</span>';
   renderRebalance('p',ST.personale.etfs,pEtfVal,ST.personale.pac);
 
-  // Figli ETF
   const{totalVal:fEtfVal,totalCarico:fEtfCarico}=renderETFCard('figli','f-etf-card');
   const{val:fGoldVal,carico:fGoldCarico}=renderGold();
   const fTot=fEtfVal+fGoldVal, fCar=fEtfCarico+fGoldCarico;
   const fGain=fTot-fCar, fGainPct=fCar>0?fGain/fCar:0;
+  const fEtfGain=fEtfVal-fEtfCarico, fEtfGainPct=fEtfCarico>0?fEtfGain/fEtfCarico:0;
+  const fGoldGain=fGoldVal-fGoldCarico, fGoldGainPct=fGoldCarico>0?fGoldGain/fGoldCarico:0;
+
   document.getElementById('f-etf-tot').textContent=fE(fEtfVal);
+  document.getElementById('f-etf-sub').className='sum-sub '+gc(fEtfGain);
+  document.getElementById('f-etf-sub').textContent=gs(fEtfGain)+fE(fEtfGain)+' '+gs(fEtfGainPct)+fP(fEtfGainPct);
   document.getElementById('f-gold-tot').textContent=fE(fGoldVal);
+  document.getElementById('f-gold-sub').className='sum-sub '+gc(fGoldGain);
+  document.getElementById('f-gold-sub').textContent=gs(fGoldGain)+fE(fGoldGain)+' '+gs(fGoldGainPct)+fP(fGoldGainPct);
   document.getElementById('f-carico').textContent=fE(fCar);
   const fgEl=document.getElementById('f-gain');
   fgEl.className='sum-val '+gc(fGain);
