@@ -762,17 +762,25 @@ function findETF(id){
 // ══ RENDER GOLD ═══════════════════════════════════════════════════════════════
 function renderGold(){
   const g=ST.figli.gold;
-  const val=g.pricePerGram?g.pricePerGram*g.grams:null;
+  // Usa prezzo live se disponibile, altrimenti prezzo manuale
+  const price=goldGramEur||g.pricePerGram||null;
+  const isLive=goldGramEur>0;
+  const val=price?price*g.grams:null;
   const gain=val!==null?val-g.caricoEur:null;
   const gainPct=gain!==null?gain/g.caricoEur:null;
-  const hasPrice=g.pricePerGram!==null;
 
-  if(hasPrice) document.getElementById('gold-price-lbl').textContent=`€${f2(g.pricePerGram)}/g · €${f0(g.pricePerGram*31.1035)}/oz`;
+  if(price){
+    document.getElementById('gold-price-lbl').textContent=
+      `€${f2(price)}/g · €${f0(price*31.1035)}/oz${isLive?' · live':'· manuale'}`;
+  }
 
   document.getElementById('f-gold-block').innerHTML=`
     <div class="etf-block">
       <div class="etf-top">
-        <div class="etf-left"><div class="etf-name">Oro Fisico</div><div class="etf-detail">${g.grams}g${hasPrice?' · €'+f2(g.pricePerGram)+'/g':' · prezzo non inserito'}</div></div>
+        <div class="etf-left">
+          <div class="etf-name">Oro Fisico</div>
+          <div class="etf-detail">${g.grams}g${price?' · €'+f2(price)+'/g'+(isLive?' 🟢':''):' · prezzo non disponibile'}</div>
+        </div>
         <div class="etf-right">
           <div class="etf-val">${val!==null?fE(val):fE(g.caricoEur)+'*'}</div>
           <div class="etf-gain ${gc(gain)}">${gain!==null?gs(gain)+fE(gain)+' ('+gs(gainPct)+fP(gainPct)+')':'—'}</div>
@@ -780,15 +788,16 @@ function renderGold(){
       </div>
       <div class="etf-meta">
         <div class="meta-item"><div class="meta-lbl">Investito</div><div class="meta-val">${fE(g.caricoEur)}</div></div>
-        <div class="meta-item"><div class="meta-lbl">Prezzo attuale</div><div class="meta-val ${hasPrice?'':'neu'}">${hasPrice?fE(g.pricePerGram)+'/g':'—'}</div></div>
+        <div class="meta-item"><div class="meta-lbl">Prezzo attuale</div><div class="meta-val ${price?'':'neu'}">${price?fE(price)+'/g':'—'}</div></div>
       </div>
-      <div class="etf-actions">
-        <button class="btn-sm primary" onclick="toggleGoldPrice()">💰 Aggiorna Prezzo</button>
+      <div class="etf-actions" style="margin-top:10px">
+        <button class="btn-sm primary" onclick="toggleGoldPrice()">💰 Prezzo manuale</button>
       </div>
     </div>
     <div class="price-edit" id="price-gold">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Inserisci prezzo manuale (sovrascrive il live)</div>
       <div class="price-edit-row">
-        <input class="price-input" type="number" step="0.01" id="pinput-gold" placeholder="Prezzo €/grammo (es. 85.50)" onkeydown="if(event.key==='Enter')saveGoldPrice()">
+        <input class="price-input" type="number" step="0.01" id="pinput-gold" placeholder="Prezzo €/grammo" onkeydown="if(event.key==='Enter')saveGoldPrice()">
         <button class="confirm-btn" onclick="saveGoldPrice()">Salva</button>
       </div>
     </div>`;
@@ -1037,7 +1046,9 @@ function renderTopBar(){
     carico+=s.btcLedger.caricoEur+s.btcKraken.caricoEur;
   } else {
     const g=s.gold;
-    val+=g.pricePerGram?g.pricePerGram*g.grams:g.caricoEur;
+    const g=s.gold;
+    const goldPrice=goldGramEur||g.pricePerGram||0;
+    val+=goldPrice?goldPrice*g.grams:g.caricoEur;
     carico+=g.caricoEur;
   }
   const gain=val-carico,gainPct=carico>0?gain/carico:0;
