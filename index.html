@@ -213,8 +213,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
   <div class="live-row">
     <div class="dot loading" id="liveDot"></div>
-    <span class="live-lbl" id="liveLbl">Aggiornamento BTC…</span>
-    <button class="refresh-btn" onclick="refreshBTC()"><span id="refreshIcon">↻</span> BTC</button>
+    <span class="live-lbl" id="liveLbl">Aggiornamento prezzi…</span>
+    <button class="refresh-btn" onclick="refreshAll()"><span id="refreshIcon">↻</span> Aggiorna</button>
   </div>
 </div>
 
@@ -371,7 +371,7 @@ const DEFAULT = {
     etfs: [
       { id:'p-swda', name:'iShares Core MSCI World',   ticker:'SWDA', priceEur:null, target:0.40, drift:0.10, transactions:[] },
       { id:'p-eimi', name:'iShares Core MSCI EM IMI',  ticker:'EIMI', priceEur:null, target:0.20, drift:0.05, transactions:[] },
-      { id:'p-sgld', name:'Invesco Physical Gold ETC', ticker:'SGLD-EUR', priceEur:null, target:0.15, drift:0.05, transactions:[] },
+      { id:'p-sgld', name:'iShares Physical Gold USD (Acc)', ticker:'SGLD-EUR', priceEur:null, target:0.15, drift:0.05, transactions:[] },
       { id:'p-cmod', name:'Div. Commodity Swap EUR (Acc)', ticker:'CMOD', priceEur:null, target:0.10, drift:0.05, transactions:[] },
       { id:'p-aggh', name:'Global Aggregate Bond',     ticker:'AGGH', priceEur:null, target:0.15, drift:0.05, transactions:[] },
     ],
@@ -518,7 +518,7 @@ let ST = (()=>{
   }catch(e){return JSON.parse(JSON.stringify(DEFAULT));}
 })();
 
-let btcEur=0, currentTab='personale';
+let btcEur=0, goldGramEur=0, eurGbpRate=0.855, usdEurRate=1.08, currentTab='personale';
 function save(){
   localStorage.setItem('pfData',JSON.stringify(ST));
   saveToFirebase();
@@ -550,27 +550,26 @@ function gs(v){return v>0.001?'+':'';}
 
 // ══ FETCH BTC ════════════════════════════════════════════════════════════════
 let refreshing=false;
-async function refreshBTC(){
+async function refreshAll(){
   if(refreshing)return; refreshing=true;
-  setLive('loading','Aggiornamento BTC…');
+  setLive('loading','Aggiornamento prezzi…');
   document.getElementById('refreshIcon').classList.add('spin');
   try{
-    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur',{signal:AbortSignal.timeout(8000)});
-    const d=await r.json();
-    if(d?.bitcoin?.eur){btcEur=d.bitcoin.eur;}
-    else throw new Error('no price');
-  }catch(e){
-    try{
-      const [br,er]=await Promise.all([
-        fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT',{signal:AbortSignal.timeout(6000)}),
-        fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT',{signal:AbortSignal.timeout(6000)}),
-      ]);
-      const bd=await br.json(),ed=await er.json();
-      btcEur=parseFloat(bd.price)/parseFloat(ed.price);
-    }catch(e2){setLive('error','Errore BTC');refreshing=false;document.getElementById('refreshIcon').classList.remove('spin');return;}
-  }
-  const now=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-  setLive('ok','BTC aggiornato alle '+now);
+    const [eurGbp, eurUsdR, btc, gold] = await Promise.all([
+      fetchEurGbp(),
+      fetch(`${WORKER_URL}/?ticker=EURUSD%3DX`).then(r=>r.json()).then(d=>d.price||1.08).catch(()=>1.08),
+      fetchBTC(),
+      fetchGold(),
+    ]);
+    eurGbpRate=eurGbp;
+    usdEurRate=1/eurUsdR;
+    await fetchAllETFPrices();
+    if(btc) btcEur=btc;
+    if(gold) goldGramEur=gold;
+    const now=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+    setLive('ok','Aggiornato alle '+now);
+    save();
+  }catch(e){ setLive('error','Errore aggiornamento'); console.error(e); }
   refreshing=false;
   document.getElementById('refreshIcon').classList.remove('spin');
   renderAll();
@@ -1189,7 +1188,89 @@ function showToast(msg,type=''){
 }
 
 // ══ FIREBASE ══════════════════════════════════════════════════════════════════
-const FB_SECRET = "pfSecret2024!";
+// ══ FETCH PREZZI ══════════════════════════════════════════════════════════════
+const WORKER_URL = 'https://etf-proxy.fabiano-ostuni.workers.dev';
+
+// Mappa ticker interni → ticker Yahoo Finance
+const YAHOO_TICKERS = {
+  'SWDA':     'SWDA.MI',   // MSCI World - Borsa Italiana EUR
+  'EIMI':     'EIMI.MI',   // EM IMI - Borsa Italiana EUR
+  'SGLD':     'SGLD.MI',   // Gold ETC figli (Invesco) - Borsa Italiana EUR
+  'SGLD-EUR': 'IGLN.L',    // Gold ETC personale (iShares Physical Gold USD) - LSE USD
+  'CMOD':     'CMOD.MI',   // Commodity EUR personale - Borsa Italiana EUR
+  'CMOD-USD': 'ICOM.L',    // Commodity USD figli - LSE USD (IE00BDFL4P12)
+  'AGGH':     'AGGH.MI',   // Global Aggregate Bond - Borsa Italiana EUR
+};
+
+async function fetchETFPrice(ticker){
+  const yahooTicker = YAHOO_TICKERS[ticker] || ticker;
+  try{
+    const r = await fetch(`${WORKER_URL}/?ticker=${yahooTicker}`, {signal: AbortSignal.timeout(10000)});
+    const d = await r.json();
+    if(d.error || !d.price) return null;
+    return {price: d.price, currency: d.currency};
+  }catch(e){ return null; }
+}
+
+async function fetchAllETFPrices(){
+  const allEtfs=[...ST.personale.etfs,...ST.figli.etfs];
+  // Deduplicazione: ticker unici per non fare chiamate doppie
+  const seen=new Set();
+  const calls=allEtfs.filter(e=>{ if(seen.has(e.ticker))return false; seen.add(e.ticker);return true; });
+  const results=await Promise.allSettled(calls.map(etf=>fetchETFPrice(etf.ticker).then(r=>({ticker:etf.ticker,r}))));
+  const priceMap={};
+  results.forEach(res=>{
+    if(res.status==='fulfilled'&&res.value.r){
+      const{ticker,r}=res.value;
+      let price=r.price;
+      // Conversione se non EUR (fallback LSE)
+      if(r.currency==='GBp') price=r.price/100/eurGbpRate;
+      else if(r.currency==='GBP') price=r.price/eurGbpRate;
+      else if(r.currency==='USD') price=r.price/usdEurRate;
+      priceMap[ticker]=price;
+    }
+  });
+  // Applica prezzi a tutti gli ETF
+  allEtfs.forEach(e=>{ if(priceMap[e.ticker]) e.priceEur=priceMap[e.ticker]; });
+}
+
+async function fetchBTC(){
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur',{signal:AbortSignal.timeout(8000)});
+    const d=await r.json();
+    if(d?.bitcoin?.eur) return d.bitcoin.eur;
+  }catch(e){}
+  try{
+    const [br,er]=await Promise.all([
+      fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT',{signal:AbortSignal.timeout(6000)}),
+      fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT',{signal:AbortSignal.timeout(6000)}),
+    ]);
+    const bd=await br.json(),ed=await er.json();
+    if(bd?.price) return parseFloat(bd.price)/parseFloat(ed.price);
+  }catch(e){}
+  return null;
+}
+
+async function fetchGold(){
+  try{
+    const [gr,fr]=await Promise.all([
+      fetch(`${WORKER_URL}/?ticker=GC%3DF`,{signal:AbortSignal.timeout(8000)}),
+      fetch(`${WORKER_URL}/?ticker=EURUSD%3DX`,{signal:AbortSignal.timeout(8000)}),
+    ]);
+    const gd=await gr.json(), fd=await fr.json();
+    if(gd.price&&fd.price) return (gd.price/fd.price)/31.1035;
+  }catch(e){}
+  return null;
+}
+
+async function fetchEurGbp(){
+  try{
+    const r=await fetch(`${WORKER_URL}/?ticker=EURGBP%3DX`,{signal:AbortSignal.timeout(8000)});
+    const d=await r.json();
+    if(d.price) return d.price;
+  }catch(e){}
+  return 0.855;
+}
 let db, docRef, syncTimeout=null;
 
 async function loadFromFirebase(){
@@ -1198,25 +1279,22 @@ async function loadFromFirebase(){
     const doc=await docRef.get();
     if(doc.exists){
       const data=doc.data();
-      if(data.dataVer&&data.dataVer===DATA_VER){
-        if(data.personale) ST.personale=data.personale;
-        if(data.figli) ST.figli=data.figli;
-      } else {
-        // Versione diversa — migra i dati mantenendo transazioni e prezzi
-        if(data.personale){
-          ST.personale=data.personale;
-          // Correggi ticker errati
-          const tickerFix = {'p-sgld':'SGLD-EUR','p-cmod':'CMOD'};
-          ST.personale.etfs.forEach(e=>{ if(tickerFix[e.id]) e.ticker=tickerFix[e.id]; });
-        }
-        if(data.figli){
-          ST.figli=data.figli;
-          const tickerFix = {'f-sgld':'SGLD','f-cmod':'CMOD-USD'};
-          ST.figli.etfs.forEach(e=>{ if(tickerFix[e.id]) e.ticker=tickerFix[e.id]; });
-        }
-        // Salva con versione aggiornata
-        saveToFirebase();
-      }
+      if(data.personale) ST.personale=data.personale;
+      if(data.figli) ST.figli=data.figli;
+      // Correggi solo i ticker errati senza toccare transazioni o prezzi
+      const fixes=[
+        {id:'p-sgld', ticker:'SGLD-EUR'},
+        {id:'p-cmod', ticker:'CMOD'},
+        {id:'f-sgld', ticker:'SGLD'},
+        {id:'f-cmod', ticker:'CMOD-USD'},
+      ];
+      const allEtfs=[...ST.personale.etfs,...ST.figli.etfs];
+      let fixed=false;
+      fixes.forEach(f=>{
+        const etf=allEtfs.find(e=>e.id===f.id);
+        if(etf&&etf.ticker!==f.ticker){etf.ticker=f.ticker;fixed=true;}
+      });
+      if(fixed) saveToFirebase();
       localStorage.setItem('pfData',JSON.stringify(ST));
       return true;
     }
@@ -1288,7 +1366,7 @@ function initApp(){
   document.getElementById('f-csv-imp').addEventListener('change',e=>importCSV(e,'figli'));
   setTimeout(()=>switchTab('personale'),50);
   renderAll();
-  refreshBTC();
+  refreshAll();
 }
 
 checkAuth();
