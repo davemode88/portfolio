@@ -511,6 +511,7 @@ let ST = (()=>{
 
 let btcEur=0, goldGramEur=0, eurGbpRate=0.855, eurUsdRate=1.08, currentTab='personale';
 function save(){
+  ST._updatedAt=new Date().toISOString();
   localStorage.setItem('pfData',JSON.stringify(ST));
   saveToFirebase();
 }
@@ -1311,14 +1312,21 @@ async function loadFromFirebase(){
     const doc=await docRef.get();
     if(doc.exists){
       const data=doc.data();
+      // Confronta timestamp — non sovrascrivere se i dati locali sono più recenti
+      const fbTime=data.updatedAt?new Date(data.updatedAt).getTime():0;
+      const localTime=ST._updatedAt?new Date(ST._updatedAt).getTime():0;
+      if(localTime>fbTime){
+        // Dati locali più recenti — salva su Firebase invece di sovrascrivere
+        console.log('Dati locali più recenti, salvo su Firebase');
+        saveToFirebase();
+        return true;
+      }
       if(data.personale) ST.personale=data.personale;
       if(data.figli) ST.figli=data.figli;
-      // Correggi solo i ticker errati senza toccare transazioni o prezzi
+      // Correggi ticker errati senza toccare transazioni o prezzi
       const fixes=[
-        {id:'p-sgld', ticker:'SGLD-EUR'},
-        {id:'p-cmod', ticker:'CMOD'},
-        {id:'f-sgld', ticker:'SGLD'},
-        {id:'f-cmod', ticker:'CMOD-USD'},
+        {id:'p-sgld',ticker:'SGLD-EUR'},{id:'p-cmod',ticker:'CMOD'},
+        {id:'f-sgld',ticker:'SGLD'},{id:'f-cmod',ticker:'CMOD-USD'},
       ];
       const allEtfs=[...ST.personale.etfs,...ST.figli.etfs];
       let fixed=false;
@@ -1344,7 +1352,7 @@ function saveToFirebase(){
         dataVer:DATA_VER,
         personale:ST.personale,
         figli:ST.figli,
-        updatedAt:new Date().toISOString(),
+        updatedAt:ST._updatedAt||new Date().toISOString(),
       });
     }catch(e){console.warn('Firebase save error:',e);}
   },2000);
