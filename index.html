@@ -1361,7 +1361,6 @@ function saveToFirebase(){
   if(syncTimeout) clearTimeout(syncTimeout);
   syncTimeout=setTimeout(()=>saveToFirebaseNow(),1500);
 }
-}
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
 function onFirebaseLoaded(){
