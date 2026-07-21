@@ -1355,7 +1355,7 @@ function saveToFirebase(){
         updatedAt:ST._updatedAt||new Date().toISOString(),
       });
     }catch(e){console.warn('Firebase save error:',e);}
-  },2000);
+  },5000);
 }
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
@@ -1379,20 +1379,23 @@ function onFirebaseLoaded(){
     }).catch(e=>console.warn('Redirect error:',e.code, e.message));
 
     // Osserva lo stato di autenticazione
+    let firebaseLoaded=false;
     firebase.auth().onAuthStateChanged(user=>{
       if(user){
-        // Utente autenticato — nascondi login e avvia app
         document.getElementById('loginScreen').classList.add('hidden');
         sessionStorage.setItem('pfAuth','1');
         if(!appStarted){
           appStarted=true;
           initApp();
+          // Carica da Firebase SOLO al primo avvio, non ad ogni refresh
+          if(!firebaseLoaded){
+            firebaseLoaded=true;
+            loadFromFirebase().then(loaded=>{
+              if(loaded){renderAll();showToast('Dati sincronizzati ✓','success');}
+            });
+          }
         }
-        loadFromFirebase().then(loaded=>{
-          if(loaded){renderAll();showToast('Dati sincronizzati ✓','success');}
-        });
       } else {
-        // Non autenticato — mostra schermata login
         document.getElementById('loginScreen').classList.remove('hidden');
       }
     });
