@@ -190,6 +190,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="dot loading" id="liveDot"></div>
     <span class="live-lbl" id="liveLbl">Aggiornamento prezzi…</span>
     <button class="refresh-btn" onclick="refreshAll()"><span id="refreshIcon">↻</span> Aggiorna</button>
+    <button class="refresh-btn" onclick="syncFromFirebase()" style="margin-left:4px" title="Sincronizza da Firebase">☁</button>
   </div>
 </div>
 
@@ -511,9 +512,8 @@ let ST = (()=>{
 
 let btcEur=0, goldGramEur=0, eurGbpRate=0.855, eurUsdRate=1.08, currentTab='personale';
 function save(){
-  ST._updatedAt=new Date().toISOString();
   localStorage.setItem('pfData',JSON.stringify(ST));
-  saveToFirebase();
+  saveToFirebaseNow(); // salvataggio immediato, non debounced
 }
 
 // ══ CALCOLI ETF ═══════════════════════════════════════════════════════════════
@@ -541,6 +541,14 @@ function gc(v){return v>0.001?'pos':v<-0.001?'neg':'neu';}
 function gs(v){return v>0.001?'+':'';}
 
 // ══ FETCH BTC ════════════════════════════════════════════════════════════════
+async function syncFromFirebase(){
+  setLive('loading','Sincronizzazione da Firebase…');
+  const loaded=await loadFromFirebase();
+  if(loaded){renderAll();showToast('Sincronizzato da Firebase ✓','success');}
+  else showToast('Nessun dato su Firebase','');
+  setLive('ok','Sincronizzato');
+}
+
 let refreshing=false;
 async function refreshAll(){
   if(refreshing)return; refreshing=true;
@@ -1312,18 +1320,9 @@ async function loadFromFirebase(){
     const doc=await docRef.get();
     if(doc.exists){
       const data=doc.data();
-      // Confronta timestamp — non sovrascrivere se i dati locali sono più recenti
-      const fbTime=data.updatedAt?new Date(data.updatedAt).getTime():0;
-      const localTime=ST._updatedAt?new Date(ST._updatedAt).getTime():0;
-      if(localTime>fbTime){
-        // Dati locali più recenti — salva su Firebase invece di sovrascrivere
-        console.log('Dati locali più recenti, salvo su Firebase');
-        saveToFirebase();
-        return true;
-      }
       if(data.personale) ST.personale=data.personale;
       if(data.figli) ST.figli=data.figli;
-      // Correggi ticker errati senza toccare transazioni o prezzi
+      // Correggi ticker errati
       const fixes=[
         {id:'p-sgld',ticker:'SGLD-EUR'},{id:'p-cmod',ticker:'CMOD'},
         {id:'f-sgld',ticker:'SGLD'},{id:'f-cmod',ticker:'CMOD-USD'},
@@ -1334,28 +1333,34 @@ async function loadFromFirebase(){
         const etf=allEtfs.find(e=>e.id===f.id);
         if(etf&&etf.ticker!==f.ticker){etf.ticker=f.ticker;fixed=true;}
       });
-      if(fixed) saveToFirebase();
       localStorage.setItem('pfData',JSON.stringify(ST));
+      if(fixed) await saveToFirebaseNow();
       return true;
     }
   }catch(e){console.warn('Firebase load error:',e);}
   return false;
 }
 
+// Salvataggio immediato (senza debounce) per operazioni critiche
+async function saveToFirebaseNow(){
+  if(!docRef) return;
+  if(syncTimeout) clearTimeout(syncTimeout);
+  try{
+    await docRef.set({
+      secret:FB_SECRET,
+      dataVer:DATA_VER,
+      personale:ST.personale,
+      figli:ST.figli,
+      updatedAt:new Date().toISOString(),
+    });
+  }catch(e){console.warn('Firebase save error:',e);}
+}
+
 function saveToFirebase(){
   if(!docRef) return;
   if(syncTimeout) clearTimeout(syncTimeout);
-  syncTimeout=setTimeout(async()=>{
-    try{
-      await docRef.set({
-        secret:FB_SECRET,
-        dataVer:DATA_VER,
-        personale:ST.personale,
-        figli:ST.figli,
-        updatedAt:ST._updatedAt||new Date().toISOString(),
-      });
-    }catch(e){console.warn('Firebase save error:',e);}
-  },5000);
+  syncTimeout=setTimeout(()=>saveToFirebaseNow(),1500);
+}
 }
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
