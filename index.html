@@ -1191,7 +1191,7 @@ async function importCSV(event, portfolio){
         console.log(`BUY trovati: ${buys}, aggiunti: ${added}, saltati: ${skipped}`);
 
         if(added>0){
-          await save(); renderAll();
+          save(); renderAll();
           showToast(`${added} nuove transazioni aggiunte${skipped?' · '+skipped+' già presenti':''}  ✓`,'success');
         } else {
           showToast(`BUY trovati: ${buys} · Nuove: ${added} · Già presenti: ${skipped}`,'');
@@ -1215,7 +1215,7 @@ function exportData(p){
 async function importData(event,p){
   const file=event.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=e=>{
+  reader.onload=async e=>{
     try{const parsed=JSON.parse(e.target.result);ST[p]=parsed.data||parsed;await save();renderAll();showToast('Dati importati ✓','success');}
     catch(e){showToast('Errore JSON','error');}
     event.target.value='';
