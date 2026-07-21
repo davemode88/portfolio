@@ -511,9 +511,9 @@ let ST = (()=>{
 })();
 
 let btcEur=0, goldGramEur=0, eurGbpRate=0.855, eurUsdRate=1.08, currentTab='personale';
-function save(){
+async function save(){
   localStorage.setItem('pfData',JSON.stringify(ST));
-  saveToFirebaseNow(); // salvataggio immediato, non debounced
+  await saveToFirebaseNow();
 }
 
 // ══ CALCOLI ETF ═══════════════════════════════════════════════════════════════
@@ -568,7 +568,7 @@ async function refreshAll(){
     if(gold) goldGramEur=gold;
     const now=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
     setLive('ok','Aggiornato alle '+now);
-    save();
+    await save();
   }catch(e){ setLive('error','Errore aggiornamento'); console.error(e); }
   refreshing=false;
   document.getElementById('refreshIcon').classList.remove('spin');
@@ -706,7 +706,7 @@ function togglePrice(id){
   if(!isOpen){el.classList.add('open');setTimeout(()=>document.getElementById('pinput-'+id).focus(),100);}
 }
 
-function savePrice(id){
+async function savePrice(id){
   const val=parseFloat(document.getElementById('pinput-'+id).value.replace(',','.'));
   if(isNaN(val)||val<=0){showToast('Prezzo non valido','error');return;}
   const etf=findETF(id);
@@ -721,7 +721,7 @@ function savePrice(id){
       synced++;
     }
   });
-  save();
+  await save();
   document.getElementById('price-'+id).classList.remove('open');
   document.getElementById('pinput-'+id).value='';
   renderAll();
@@ -735,7 +735,7 @@ function toggleTx(id){
   if(!isOpen) el.classList.add('open');
 }
 
-function addTx(id,portfolio){
+async function addTx(id,portfolio){
   const date=document.getElementById('txdate-'+id).value;
   const shares=parseFloat(document.getElementById('txshares-'+id).value.replace(',','.'));
   const price=parseFloat(document.getElementById('txprice-'+id).value.replace(',','.'));
@@ -745,7 +745,7 @@ function addTx(id,portfolio){
   etf.transactions.push({date,shares,priceEur:price});
   etf.transactions.sort((a,b)=>a.date.localeCompare(b.date));
   etf.priceEur=price; // aggiorna anche il prezzo corrente
-  save();
+  await save();
   document.getElementById('tx-'+id).classList.remove('open');
   document.getElementById('txshares-'+id).value='';
   document.getElementById('txprice-'+id).value='';
@@ -753,11 +753,11 @@ function addTx(id,portfolio){
   showToast('Transazione aggiunta ✓','success');
 }
 
-function delTx(id,idx){
+async function delTx(id,idx){
   const etf=findETF(id);
   if(!etf)return;
   etf.transactions.splice(idx,1);
-  save();
+  await save();
   renderAll();
   showToast('Transazione rimossa','success');
 }
@@ -815,11 +815,11 @@ function toggleGoldPrice(){
   if(!isOpen){el.classList.add('open');setTimeout(()=>document.getElementById('pinput-gold').focus(),100);}
   else el.classList.remove('open');
 }
-function saveGoldPrice(){
+async function saveGoldPrice(){
   const val=parseFloat(document.getElementById('pinput-gold').value.replace(',','.'));
   if(isNaN(val)||val<=0){showToast('Prezzo non valido','error');return;}
   ST.figli.gold.pricePerGram=val;
-  save();
+  await save();
   document.getElementById('price-gold').classList.remove('open');
   document.getElementById('pinput-gold').value='';
   renderAll();
@@ -942,7 +942,7 @@ function toggleBtcTx(wallet){
   if(!isOpen) el.classList.add('open');
 }
 
-function addBtcTx(wallet){
+async function addBtcTx(wallet){
   const date=document.getElementById('btcdate-'+wallet).value;
   const btc=parseFloat(document.getElementById('btcamt-'+wallet).value.replace(',','.'));
   const eur=parseFloat(document.getElementById('btceur-'+wallet).value.replace(',','.'));
@@ -953,15 +953,15 @@ function addBtcTx(wallet){
   // Aggiorna totali
   ST.personale[wallet].btc=ST.personale[wallet].transactions.reduce((s,t)=>s+t.btc,0);
   ST.personale[wallet].caricoEur=ST.personale[wallet].transactions.reduce((s,t)=>s+t.caricoEur,0);
-  save(); toggleBtcTx(wallet); renderAll();
+  await save(); toggleBtcTx(wallet); renderAll();
   showToast('Transazione BTC aggiunta ✓','success');
 }
 
-function delBtcTx(wallet,idx){
+async function delBtcTx(wallet,idx){
   ST.personale[wallet].transactions.splice(idx,1);
   ST.personale[wallet].btc=ST.personale[wallet].transactions.reduce((s,t)=>s+t.btc,0);
   ST.personale[wallet].caricoEur=ST.personale[wallet].transactions.reduce((s,t)=>s+t.caricoEur,0);
-  save(); renderAll();
+  await save(); renderAll();
   showToast('Transazione rimossa','success');
 }
 
@@ -1133,7 +1133,7 @@ function parseCSVLine(line){
   return result;
 }
 
-function importCSV(event, portfolio){
+async function importCSV(event, portfolio){
   const file=event.target.files[0]; if(!file)return;
   showToast('Lettura file in corso…','');
   const reader=new FileReader();
@@ -1191,7 +1191,7 @@ function importCSV(event, portfolio){
         console.log(`BUY trovati: ${buys}, aggiunti: ${added}, saltati: ${skipped}`);
 
         if(added>0){
-          save(); renderAll();
+          await save(); renderAll();
           showToast(`${added} nuove transazioni aggiunte${skipped?' · '+skipped+' già presenti':''}  ✓`,'success');
         } else {
           showToast(`BUY trovati: ${buys} · Nuove: ${added} · Già presenti: ${skipped}`,'');
@@ -1212,11 +1212,11 @@ function exportData(p){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=`portfolio_${p}_${new Date().toISOString().slice(0,10)}.json`;a.click();
 }
-function importData(event,p){
+async function importData(event,p){
   const file=event.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=e=>{
-    try{const parsed=JSON.parse(e.target.result);ST[p]=parsed.data||parsed;save();renderAll();showToast('Dati importati ✓','success');}
+    try{const parsed=JSON.parse(e.target.result);ST[p]=parsed.data||parsed;await save();renderAll();showToast('Dati importati ✓','success');}
     catch(e){showToast('Errore JSON','error');}
     event.target.value='';
   };
